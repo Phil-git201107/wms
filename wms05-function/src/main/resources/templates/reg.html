@@ -13,17 +13,59 @@
 <link rel="stylesheet" href="css/login.css">
 <script type="text/javascript" src="jquery/jquery-2.1.1.min.js"></script>
 <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+<!-- 導入表單驗證插件 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/1000hz-bootstrap-validator/0.11.9/validator.min.js"></script>
 <script type="text/javascript" src="layer/layer.js"></script>
 <script type="text/javascript"> 
      
+	$(function(){
+		// 清空表單內資料
+		$("#register_form").each(function(){
+			this.reset();
+		});
+		// 開啟欄位驗證,各欄位驗證規則,寫於標籤內
+		$("#register_form").validator();
+		$("#register_form").validator().on("submit", function(e) {
+			if (e.isDefaultPrevented()) { // 未驗證通過 則不處理
+				return;
+			} else { // 通過後，送出表單	
+				layer.msg("已送出表單,請稍等!");
+			}
+			//e.preventDefault(); // 防止原始 form 提交表單
+		});
+		// 將電郵地址傳遞給後台,發送驗證碼信件給用戶
+		$("#getVerificationCodeBtn").click(function(){
+			layer.msg("正發送驗證碼信件給您,請稍等!");
+			var email = $.trim($("input[name='email']").val());
+			var hiddenInput = $("#hiddenInput");
+			$.ajax({
+				url:"/member/do/sendEmail",
+				type:"post",
+				data:{"email":email},
+				success:function(resp){
+					hiddenInput.attr("value", resp.data.veriCode);
+					layer.msg("驗證碼已發送至您的電郵地址");			
+				},
+				error:function(resp){
+					layer.msg("驗證碼發送失敗,請稍後再試");
+				}
+			});
+		
+		});
+	});
+	
+	
+
+     
 </script>
+<title>用戶註冊頁</title>
 </head>
 <body>
 	<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
 		<div class="container">
 			<div class="navbar-header">
 				<div>
-					<a class="navbar-brand" href="index.html" style="font-size: 32px;">CHicZU-倉儲物流管理平台</a>
+					<a class="navbar-brand" href="/" style="font-size: 32px;">CHicZU-倉儲物流管理平台</a>
 				</div>
 			</div>
 		</div>
@@ -31,42 +73,66 @@
 
 	<div class="container">
 
-		<form th:action="@{/member/do/register}" method="post" class="form-signin" role="form">
+		<form th:action="@{/member/do/register}" method="post" class="form-signin" role="form" id="register_form">
 			<h2 class="form-signin-heading">
 				<i class="glyphicon glyphicon-log-in"></i> 用戶註冊
 			</h2>
 			<p th:text="${errorMsg}" style="color: red;">這裡顯示從請求域取出的錯誤訊息</p>
+			<input type="hidden" name="token" id="hiddenInput">
 			<div class="form-group has-success has-feedback">
-				<input type="text" name="acctName" class="form-control" id="inputSuccess4"
-					placeholder="請輸入登錄帳號" min="5" max="20" autofocus> <span
-					class="glyphicon glyphicon-user form-control-feedback"></span>
+				<input type="text" name="acctname" class="form-control" placeholder="請輸入登錄帳號" 
+					pattern="^[A-Za-z0-9]{3,12}$"
+					data-error="帳號不合規則,請輸入3~12個含有英文字母或數字的組合。" required="required"
+					data-toggle="tooltip" title="請輸入3~12個含有英文字母或數字的組合。" autofocus> 
+					<span class="glyphicon glyphicon-user form-control-feedback"></span>
 			</div>
 			<div class="form-group has-success has-feedback">
-				<input type="text" name="password" class="form-control" id="inputSuccess4"
-					placeholder="請輸入登錄密碼" style="margin-top: 10px;" min="5" max="20"> <span
-					class="glyphicon glyphicon-lock form-control-feedback"></span>
+				<input type="password" name="password" class="form-control" id="inputPW" placeholder="請輸入登錄密碼" style="margin-top: 10px;" 
+					pattern="^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{5,55}$"
+					data-error="密碼不合規則,請輸入5~55個包含大小寫字母和數字的組合，不能使用特殊字符。" required="required"
+					data-toggle="tooltip" title="請輸入5~12個包含大小寫字母和數字的組合，不能使用特殊字符。"> 
+					<span class="glyphicon glyphicon-lock form-control-feedback"></span>
 			</div>
 			<div class="form-group has-success has-feedback">
-                <input type="text" name="nickName" class="form-control" id="inputSuccess4"
-                    placeholder="請輸入用戶暱稱" style="margin-top: 10px;" min="5" max="20"> <span
-                    class="glyphicon glyphicon-knight form-control-feedback"></span>    
+				<input type="password" name="passwordAgain" class="form-control" placeholder="請再輸入一次密碼" style="margin-top: 10px;" 
+					 data-match="#inputPW" data-error="糟了！密碼並未吻合，請重新輸入！" required="required"> 
+					<span class="glyphicon glyphicon-lock form-control-feedback"></span>
+				<div class="help-block with-errors"></div>  	
+			</div>
+			<div class="form-group has-success has-feedback">
+                <input type="text" name="nickname" class="form-control" placeholder="請輸入用戶暱稱" style="margin-top: 10px;"
+                    pattern="^[\u4E00-\u9FA5A-Za-z0-9]{1,12}$"
+                    data-error="暱稱不合規則,請輸入1~12個含中文、英文或數字的組合"
+                    data-toggle="tooltip" title="請輸入1~12個含中文、英文或數字的組合。" required="required" > 
+                    <span class="glyphicon glyphicon-knight form-control-feedback"></span>    
+                <!-- <div class="help-block with-errors"></div>  -->
             </div>
+            <div class="form-group has-success has-feedback">
+				<select name="department" class="form-control">
+					<option value="">所屬部門</option>
+					<option value="2">行政組</option>
+					<option value="3">進貨-儲位組</option>
+					<option value="5">出貨組</option>
+				</select>
+			</div>
 			<div class="form-group has-success has-feedback">
-				<input type="text" name="email" class="form-control" id="inputSuccess4"
-					placeholder="請輸入電郵地址" style="margin-top: 10px;"> 
-					<span class="glyphicon glyphicon glyphicon-envelope form-control-feedback"></span>  
+				<input type="email" name="email" class="form-control" placeholder="請輸入電郵地址"
+					pattern="^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$"
+					data-error="郵件格式錯誤,正確為:~@~.~" required="required" > 
+					<span class="glyphicon glyphicon-envelope form-control-feedback"></span>
+				<div class="help-block with-errors"></div>	  
 			</div>
 			<div class="form-group has-success has-feedback">
 				<div class="input-group">
-					<input type="text" name="encryCode" class="form-control" id="inputSuccess4" placeholder="請輸入驗證碼">
+					<input type="text" name="code" class="form-control" placeholder="請輸入驗證碼" required="required">
 					<span class="input-group-btn">
-						<button class="btn btn-lg btn-primary" type="button" id="encryCodeBtn" style="font-size: 16px;margin-left: 5px;">獲取驗證碼</button>
+						<button class="btn btn-lg btn-primary" type="button" id="getVerificationCodeBtn" style="font-size: 16px;margin-left: 5px;">獲取驗證碼</button>
 					</span>
 				</div>
 			</div>
 			
 			<div class="form-group has-success has-feedback">
-				<button type="submit" class="btn btn-lg btn-success btn-block" id="regBtn">註册</button>
+				<button type="submit" class="btn btn-lg btn-success btn-block">註册</button>
 			</div>
 			
 		</form>

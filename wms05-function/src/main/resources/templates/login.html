@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="">
-<meta name="keys" content="">
-<meta name="author" content="">
 <base th:href="@{/}"/>
 <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
 <link rel="stylesheet" href="css/font-awesome.min.css">
@@ -14,23 +11,42 @@
 <script type="text/javascript" src="jquery/jquery-2.1.1.min.js"></script>
 <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="layer/layer.js"></script>
-<script src="jquery/jquery-2.1.1.min.js"></script>
-<script src="bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+	
+	$(function(){
+		// 為登錄密碼欄位設置顯示/隱藏點擊事件
+		$("#show_hide_password a").click(function(){
+			if($('#show_hide_password input').attr("type") == "text"){
+	            $('#show_hide_password input').attr('type', 'password');
+	            $('#show_hide_password i').addClass( "fa-eye" );
+	            $('#show_hide_password i').removeClass( "fa-eye-slash" );
+	        }else if($('#show_hide_password input').attr("type") == "password"){
+	            $('#show_hide_password input').attr('type', 'text');
+	            $('#show_hide_password i').removeClass( "fa-eye" );
+	            $('#show_hide_password i').addClass( "fa-eye-slash" );
+	        }
+		});
+	});
+	
+	
+</script>
+<title>用戶登錄頁</title>
 </head>
 <body>
+
 	<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
 		<div class="container">
 			<div class="navbar-header">
 				<div>
-					<a class="navbar-brand" href="index.html" style="font-size: 32px;">CHicZU-倉儲物流管理平台</a>
+					<a class="navbar-brand" href="" style="font-size: 32px;">CHicZU-倉儲物流管理平台</a>
 				</div>
 			</div>
 		</div>
 	</nav>
-
+	
 	<div class="container">
-
-		<form th:action="@{/member/do/login}" method="post" class="form-signin" role="form">
+		<form th:action="@{/member/do/login}" method="post" 
+			style="max-width: 380px; padding: 15px 35px 45px;margin: 0 auto;" role="form">
 			<h2 class="form-signin-heading">
 				<i class="glyphicon glyphicon-log-in"></i> 用戶登錄
 			</h2>
@@ -38,19 +54,22 @@
 			<p th:text="${errorMsg}" style="color: red;">這裡顯示登錄失敗的提示訊息</p>
 			<!-- 自session域裡獲取錯誤訊息 -->
 			<p th:text="${session.errorMsg}" style="color: red;">這裡顯示登錄檢查後發現不允許訪問時的提示訊息</p>
-			<div class="form-group has-success has-feedback">
-				<input type="text" name="loginacct" class="form-control" id="inputSuccess4"
-					placeholder="請輸入登錄帳號" autofocus> <span
-					class="glyphicon glyphicon-user form-control-feedback"></span>
+			<div class="form-group has-success has-feedback">		
+				<input type="text" name="acctname" class="form-control" placeholder="請輸入登錄帳號" style="height: 40px;">
+				<span class="glyphicon glyphicon-user form-control-feedback"></span>	
 			</div>
 			<div class="form-group has-success has-feedback">
-				<input type="text" name="userpswd" class="form-control" id="inputSuccess4"
-					placeholder="請輸入登入密碼" style="margin-top: 10px;"> <span
-					class="glyphicon glyphicon-lock form-control-feedback"></span>
+				<div class="input-group" id="show_hide_password">  
+					<input type="password" name="password" class="form-control" placeholder="請輸入登錄密碼" style="height: 40px;">
+					<div class="input-group-addon">
+						<a href="#"><i class="fa fa-eye" aria-hidden="true"></i></a>
+					</div> 
+				</div>  
 			</div>
-			<div class="form-group has-success has-feedback">
-				<input type="text"  name="code" class="form-control" id="inputSuccess4"
-					placeholder="請輸入驗證碼">
+			<div class="form-group has-success has-feedback form-outline">
+				<input type="text"  name="code" class="form-control"
+					placeholder="請輸入驗證碼" style="height: 40px;">
+				<span class="glyphicon glyphicon-check form-control-feedback"></span>	
 				<div class="row_bj" style="width: 100%;">
 					<label class="control-label" style="font-size: 18px;">驗證碼</label> <img
 						alt="驗證碼" onclick="this.src='/getCode?d='+new Date()*1"
@@ -63,6 +82,5 @@
             </div>
 		</form>
 	</div>
-	
 </body>
 </html>

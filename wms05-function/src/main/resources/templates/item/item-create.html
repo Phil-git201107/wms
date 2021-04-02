@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-TW" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<base th:href="@{/}" />
+<link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/font-awesome.min.css">
+<link rel="stylesheet" href="css/wms/fileinput.min.css">
+<link rel="stylesheet" href="css/wms/bootstrapValidator.min.css">
+<script src="jquery/jquery-2.1.1.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="layer/layer.js"></script>
+<script type="text/javascript" src="script/wms/fileinput.min.js"></script>
+<!-- 導入表單驗證插件 -->
+<script type="text/javascript" src="script/wms/bootstrapValidator.min.js"></script>
+<script type="text/javascript" src="script/wms/zh-TW.js"></script>
+<script type="text/javascript" src="script/wms/homepage.js"></script>
+<script type="text/javascript">
+
+	$(function(){
+		// 清空表單內資料
+		$("#newitemcreate_form").each(function(){
+			this.reset();
+		});
+		// 進行攔位驗證
+		$("#newitemcreate_form").bootstrapValidator({
+			live: 'submitted',
+	        message: '表單欄位須要填寫',
+	        excluded: '',
+	        feedbackIcons: {
+	        	valid: 'glyphicon glyphicon-ok',
+	            invalid: 'glyphicon glyphicon-remove',
+	            validating: 'glyphicon glyphicon-refresh'
+	        },
+	        fields: {
+	        	samplepic: {
+	                validators: {
+	                    notEmpty: {
+	                        message: '樣圖不能為空'
+	                    },
+	                    file: {
+	                        extension: 'png,jpg,jpeg',
+	                        type: 'image/png,image/jpg,image/jpeg',
+	                        message: '請重新選擇圖片'
+	                    }
+	                }   
+	            },
+	            category: {
+	            	validators: {
+	            		notEmpty: {
+	                        message: '類別欄位不能為空。'
+	                    },
+	            		regexp: {
+	                        regexp: /^[\u4E00-\u9FA50-9]{2,6}$/,
+	                        message: '類別不合規則,請輸入2~6個含有中文或數字的組合。'
+	                    }
+	            	}
+	            	
+	            },
+	            itemno: {
+	                validators: {
+	                    notEmpty: {
+	                        message: '編號欄位不能為空。'
+	                    },
+	                    regexp: {
+	                        regexp: /^[A-Za-z0-9]{3,12}$/,
+	                        message: '編號不合規則,請輸入3~12個含有英文大小寫字母或數字的組合。'
+	                    },
+	                    remote: {
+	                    	url: 'check/itemno/used',
+	                        message: '商品編號已存在。',
+	                        type: 'post',
+	                        delay: 2000
+	                    }
+	                }
+	            },
+	            name: {
+	            	validators: {
+	                    notEmpty: {
+	                        message: '名稱欄位不能為空。'
+	                    },
+	                    regexp: {
+	                        regexp: /^[\u4E00-\u9FA50-9]{2,12}$/,
+	                        message: '名稱不合規則,請輸入2~12個含有中文或數字的組合。'
+	                    }
+	            	}  
+	            }
+	        }
+	    });
+		// 依驗證結果,操作submitBtn
+		var bootstrapValidators = $("#newitemcreate_form").data('bootstrapValidator');
+		if(bootstrapValidators.isValid()) {
+			$("#submitBtn").removeProp("disabled");
+		}else{
+			$("#submitBtn").attr("disabled","disabled");
+		} 
+		
+		$('#resetBtn').click(function() {
+	        $('#newitemcreate_form').data('bootstrapValidator').resetForm(true);
+	    });
+		
+		// 樣圖上傳設置,運用fileinput插件
+		$("#pic").fileinput({	
+			language: "zh-TW",
+			showCaption: true, // 是否顯示標題
+			showBrowse: true, // 是否顯示瀏覽按鈕
+			showPreview: true,// 是否顯示預覽
+			showRemove: true, // 是否顯示移除按鈕
+			showUpload: false, // 是否顯示上傳按鈕
+			showClose: true, // 是否顯示關閉
+			dropZoneEnabled: false, // 是否顯示拖曳框
+			browseIcon: '<i class="glyphicon glyphicon-folder-open"></i>&nbsp;',
+			browseClass: 'btn btn-primary',
+			removeClass: "btn btn-default fileinput-btns",
+			//allowedFileExtensions : ['jpg','png','gif'], // 允許的後綴名
+			enctype: 'multipart/form-data',
+			maxFileCount: 1, // 最大上傳資料筆數
+			maxFileSize: 1024,  // 單位為kb，如果為0表示不限制文件大小	 
+			initialPreviewAsData: true
+		});
+		
+		
+	});
+</script>
+<title lang="新商品建檔頁面">新商品建檔頁面</title>
+</head>
+
+<body>
+	<!-- topnav -->
+	<nav th:replace="~{include/top-nav :: topnav}"></nav>
+	<!-- end of nav -->
+	<div class="container-fluid">
+
+		<!-- sidenav -->
+		<div th:replace="~{include/side-nav :: sidenav}"></div>
+		<!-- end of sidenav -->
+		<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+			<div class="panel panel-default">
+
+				<nav class="navbar navbar-light bg-success">
+					<div class="container-fluid">
+						<div class="navbar-header">
+							<a class="navbar-brand"> <span>新商品建檔專區</span>
+							</a>
+						</div>
+					</div>
+				</nav>
+				<div id="main-form" class="panel-body tab-content">
+					<form id="newitemcreate_form" th:action="@{/create/newitem/data}" role="form" class="form-horizontal" enctype="multipart/form-data"
+						method="post">
+						<p th:text="${errorMsg}" style="color: red;"></p>
+						<p th:text="${successMsg}" style="color: blue;"></p>
+						<div class="form-group">
+							<label class="col-md-3 control-label">商品樣圖：</label>
+							<div class="col-md-6 has-info form-group">
+								<input id="pic" name="samplepic" type="file"
+									class="form-control" required="required" 
+									data-toggle="tooltip" title="請上傳一張樣圖。" autofocus="autofocus" />
+							</div>
+						</div>
+						
+						
+
+						<div class="form-group ">
+							<label class="col-md-3 control-label">商品類別：</label>
+							<div class="col-md-6 has-info form-group">
+								<input name="category" type="text" class="form-control"
+									placeholder="請輸入商品類別,例如:玩具、居家用品.."
+									pattern="^[\u4E00-\u9FA50-9]{2,6}$"
+									data-error="類別不合規則,請輸入2~6個含有中文或數字的組合。" required="required"
+									data-toggle="tooltip" title="請輸入2~6個含有中文或數字的組合。" value="玩具"/>
+							</div>
+						</div>
+						<div class="form-group ">
+							<label class="col-md-3 control-label ">商品編號：</label>
+							<div class="col-md-6 has-info form-group">
+								<input id="itemno" name="itemno" type="text"
+									class="form-control" placeholder="請輸入商品編號,例如:A071、A081..."
+									pattern="^[A-Za-z0-9]{3,12}$"
+									data-error="編號不合規則,請輸入3~12個含有英文大小寫字母或數字的組合。"
+									required="required" data-toggle="tooltip"
+									title="請輸入3~12個含有英文大小寫字母或數字的組合。" value="A09"/> 
+									<p id="itemnoP" style="color: red; margin-top: 5px;"></p>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-3 control-label">商品名稱：</label>
+							<div class="col-md-6 has-info form-group">
+								<input name="name" type="text" class="form-control"
+									placeholder="請輸入商品名稱,例如:沙漏計時器5分鐘-粉沙.."
+									pattern="^[\u4E00-\u9FA50-9]{2,12}$"
+									data-error="名稱不合規則,請輸入2~12個含有中文或數字的組合。" required="required"
+									data-toggle="tooltip" title="請輸入2~12個含有中文或數字的組合。" value="新建商品測試檔"
+									/>
+							</div>
+						</div>
+
+
+						<div class="form-group">
+							<div class="col-md-5 col-md-offset-2" style="float: right;">
+								<button id="submitBtn" type="submit" class="btn btn-primary">提交</button>
+								<button id="resetBtn" type="reset" class="btn btn-danger">重置</button>
+							</div>
+						</div>
+
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>

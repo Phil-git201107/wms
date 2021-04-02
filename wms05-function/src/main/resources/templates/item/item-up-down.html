@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<base th:href="@{/}" />
+<link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/pagination.css"/>
+<script src="jquery/jquery-2.1.1.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="jquery/jquery.pagination.js"></script>
+<script type="text/javascript" src="layer/layer.js"></script>
+<script type="text/javascript" src="script/wms/item-up.js"></script>
+<script type="text/javascript" src="script/wms/item-down.js"></script>
+<script type="text/javascript">
+
+	$(function(){
+		// 清空itemNo輸入框的值
+		$("#itemnoInput").val("");
+		$("#downItemnoInput").val("");
+		$("#itemArea").remove("selected");
+	
+		// itemnoInput輸入框,按下enter後,觸發itemSearchBtn按鈕的點擊事件
+		// 在form標籤中,添加onsubmit="return false",讓表單默認的提交功能失效
+		$("#itemnoInput").keydown(function(e){
+			if(e.keyCode == 13){ // 13->表示按下的是enter鍵	
+				$("#itemSearchBtn").click();
+			}
+		});
+	
+		// 輸入商品編號,返回該品項名稱、庫存等商品資料
+		$("#itemSearchBtn").click(function(){
+			$("#itemPageBody td[type='text']").text("");
+			var itemNo = $("#itemnoInput").val();
+			$.ajax({
+				url:"/get/item/to/up-down/page",
+				type:"post",
+				data:{"itemNo":itemNo},
+				success:function(resp){
+					var result = resp.result;	
+					var commodity = resp.data;	
+					if("SUCCESS" == result){
+						$("#itemId").text(commodity.id);
+						$("#itemCategory").text(commodity.category);
+						$("#itemNo").text(commodity.itemno);
+						$("#itemName").text(commodity.name);
+						$("#itemStock").text(commodity.inventory);
+					}else{
+						layer.msg(resp.message,{
+							icon: 5,
+							time: 3000
+						});
+					}
+				}
+				
+			});
+			// 清空itemNo輸入框的值
+			$("#itemnoInput").val("");
+			return false;
+		});
+		// 依倉庫區域選項,顯示空儲位
+		$("#itemArea").change(function(){
+			$("#itemPosition").empty();
+			var areaVal = $("#itemArea").find("option:selected").val();
+			$.ajax({
+				url:"/get/storage/empty/spaces",
+				type:"post",
+				data:{"areaVal":areaVal},
+				success:function(resp){
+					var result = resp.result;
+					var positionList = resp.data;
+					var LocationOption;
+					if("SUCCESS" == result){
+						for(var i=0;i<positionList.length;i++){
+							LocationOption+=("<option class='optionPosition' value='"+positionList[i]+"'>"+positionList[i]+"</option>");
+						}
+						var option = LocationOption;
+						$("#itemPosition").append(option);
+					}	
+				},
+				error:function(resp){
+					layer.msg(resp.message,{
+							icon: 5,
+							time: 3000
+					});
+				}
+			});
+		});
+		// 單一商品上架按鈕綁定點擊事件
+		$("#itemUpBtn").click(function(){
+			var itemNo = $("#itemNo").text();
+			var area = $("#itemArea").find("option:selected").val();
+			var position = $("#itemPosition").find("option:selected").val();
+			if(itemNo == "" || area == "" || position == null){
+				layer.msg("請輸入待上架商品編號,並選定儲位區域與儲位號碼",{
+					icon: 7,
+					time: 3000				
+				});
+				return;
+			}
+			$.ajax({
+				url:"/save/item/position",
+				type:"post",
+				data:{
+					"itemNo":itemNo,
+					"area":area,
+					"position":position},
+				success:function(resp){
+					var result = resp.result;
+					if("SUCCESS" == result){
+						layer.msg(itemNo+": 已成功上架!",{
+								icon: 3,
+								time: 3000				
+						});
+						generateItemPage();
+					}else{
+						layer.msg(resp.message,{
+							icon: 5,
+							time: 3000
+						});
+					}
+				}	
+			});
+			generateItemDownPage();
+			$("#itemPageBody td[type='text']").text("");
+			$("#itemArea").find("option[value='" + 0 + "']").prop("selected",true);
+			$("#itemPosition").find("option").remove();
+			return false;
+		});
+		
+		//為查詢待下架單品查詢按鈕,綁定點擊事件
+		$("#downItemSearchBtn").click(function(){		
+			var itemNo = $("#downItemnoInput").val();
+			$.ajax({
+				url:"/get/down/item",
+				type:"post",
+				data:{"itemNo":itemNo},
+				success:function(resp){
+					var result = resp.result;
+					var commodity = resp.data;
+					if("SUCCESS" == result){
+						var area = commodity.position.area;
+						var positionNo = commodity.position.positionNo;
+						$("#itemId1").text(commodity.id);
+						$("#itemCategory1").text(commodity.category);
+						$("#itemNo1").text(commodity.itemno);
+						$("#itemName1").text(commodity.name);
+						$("#itemStock1").text(commodity.inventory);
+						$("#itemAreaAndPosition1").text(area+"-"+positionNo);
+					}else{
+						layer.msg(resp.message,{
+							icon: 5,
+							time: 3000
+						});
+					}
+				}
+				
+			});
+			$("#downItemnoInput").val("");
+			return false;
+		});
+		// itemnoInput輸入框,按下enter後,觸發itemSearchBtn按鈕的點擊事件
+		// 在form標籤中,添加onsubmit="return false",讓表單默認的提交功能失效
+		$("#downItemnoInput").keydown(function(e){
+			if(e.keyCode == 13){ // 13->表示按下的是enter鍵	
+				$("#downItemSearchBtn").click();
+			}
+		});
+		// 為單品下架按紐綁定單擊事件
+		$("#itemDownBtn").click(function(){
+			var itemNo = $("#itemNo1").text();
+			var itemName = $("#itemName1").text();
+			showConfirmModalSingleRemove(itemNo,itemName);
+		});
+		//為全選的checkbox綁定單擊事件
+		$("#downItemSummaryBox").click(function(){
+			//獲取全選的checkbox的狀態
+			var currentStatus = this.checked;
+			//用全選的checkbox的狀態,設置其他checkbox
+			$(".itemBox").prop("checked",currentStatus);
+		});
+		//為各別checkbox的狀態,與全選checkbox狀態做連結
+		$("#downItemPageBody1").on("click",".itemBox",function(){
+			//獲取當前頁全部itemBox的數量
+			var totalBoxCount = $(".itemBox").length;
+			//獲取選中的itembox的數量
+			var checkedBoxCount = $(".itemBox:checked").length;
+			//運用前述二者的比較結果,設置全選的checkbox
+			$("#downItemSummaryBox").prop("checked",totalBoxCount == checkedBoxCount);
+		});
+		
+		//為批量下架按鈕綁定單擊事件
+		$("#batchItemDownBtn").click(function(){
+			//創建一個陣列,用來存放被選中的commodity物件
+			var commodityArray = [];
+			//遍歷當前被選中的checkbox
+			$(".itemBox:checked").each(function(){
+				//使用this引用當前遍歷到的多選框
+				var commodityId = this.id;
+				// 通過dom操作,獲取商品編號
+				var commodityItemNo = $(this).parent().next().next().text();
+				//通過dom操作,獲取角色名稱
+				var commodityName = $(this).parent().next().next().next().text();		
+				commodityArray.push({
+					"commodityId":commodityId,
+					"commodityItemNo":commodityItemNo,
+					"commodityName":commodityName
+				});		
+				
+			});
+			if(commodityArray.length == 0){
+				layer.msg("請至少選擇一個執行刪除");
+				return;
+			}
+			//開啟模態框
+			showConfirmModalBatchRemove(commodityArray);
+		});
+		//為批量下架確認模態框裡的確認下架按鈕,綁定單擊事件
+		$("#removePositionBtn").click(function(){
+			//從全局變量範圍,獲取roleIdArray,轉換為json字串
+			var reqBody = JSON.stringify(window.commodityItemNoArray);
+			
+			$.ajax({
+				url:"/commodity/remove/position/by/commodity/itemno/array",
+				type:"post",
+				data:reqBody,
+				//當請求體是JSON格式,就必須用下行程式碼通知服務器
+				contentType:"application/json;charset=UTF-8",
+				dataType:"json",
+				success:function(resp){
+					
+					var result = resp.result;
+					
+					if(result == "SUCCESS"){
+						layer.msg("操作成功");
+						
+						generateItemDownPage();
+					}
+					if(result == "FAILED"){
+						layer.msg(resp.message);
+					}
+				},
+				error:function(response){
+					layer.msg(resp.status+" "+resp.statusText);
+				}
+			});
+			//關閉模態框
+			$("#confirmRemoveItemPositionModal").modal("hide");
+			generateItemPage();
+			$("#downItemPageBody td[type='text']").text("");
+		});
+		
+		
+		//為分頁操作準備初始化資料(設置為window的全局變量)
+		window.pageNum = 1;
+		window.pageSize = 5;
+		//調用商品上架執行分頁的函數	
+		generateItemPage();
+		//調用商品下架執行分頁的函數	
+		generateItemDownPage()
+		
+	});
+	
+</script>
+<title lang="商品上下架頁面">商品上下架</title>
+</head>
+
+<body>
+	<!-- topnav -->
+	<nav th:replace="~{include/top-nav :: topnav}"></nav>
+	<!-- end of nav -->
+	<div class="container-fluid">
+		<div class="row">
+			<!-- sidenav -->
+			<div th:replace="~{include/side-nav :: sidenav}"></div>
+			<!-- end of sidenav -->
+			<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+				<div class="panel panel-default">
+					<nav th:replace="~{include/up-down-navbar :: up-down-navbar}"></nav>
+					<div class="container">
+						
+					</div>	
+					<div class="panel-body tab-content">
+						<div id="up" class="tab-pane fade in active"> 
+							<form class="form-inline" role="form" style="float: left;" onsubmit="return false">
+								<div class="form-group has-feedback">
+									<div class="input-group">
+										<div class="input-group-addon">待上架商品</div>
+										<input id="itemnoInput" class="form-control has-success" type="text"
+											placeholder="請輸入商品編號">
+									</div>
+								</div>
+								<button id="itemSearchBtn" type="button" class="btn btn-warning">
+									<i class="glyphicon glyphicon-search"></i> 查詢
+								</button>
+							</form>
+							<button type="button" class="btn btn-primary"
+								style="float: right;" id="itemUpBtn">
+								<i class="glyphicon glyphicon-plus"></i>上架
+							</button>
+
+							<br/>
+							<hr style="clear: both;">
+							<div class="table-responsive">
+								<table class="table table-bordered">
+									<thead>
+										<tr>
+											<th>商品id</th>
+										<!-- 	<th width="10px"><input id="#" type="checkbox"></th>  -->
+											<th>類別</th>
+											<th>商品編號</th>
+											<th>商品名稱</th>
+											<th>庫存數</th>
+											<th colspan="2">儲位</th>
+										</tr>
+									</thead>
+									<tbody id="itemPageBody">
+										<tr>
+											<td id="itemId" type="text"></td>
+										<!-- 	<td ><input id="#" type="checkbox"></td>  -->
+											<td id="itemCategory" type="text"></td>
+											<td id="itemNo" type="text"></td>
+											<td id="itemName" type="text"></td>
+											<td id="itemStock" type="text"></td>
+											<td><select id="itemArea">
+													<option value="0" selected="selected">請選擇區域</option>
+													<option value="A">A</option>
+													<option value="B">B</option>
+													<option value="C">C</option>
+													<option value="D">D</option>
+													<option value="E">E</option>
+												</select>
+											</td>
+											<td><select id="itemPosition"></select></td>
+										</tr>
+									</tbody> 		
+								</table>
+							</div>	
+							<!-- 沒有儲位的商品資料 -->				
+							<form class="form-inline" role="form" style="float: left;" onsubmit="return false">
+								<div class="form-group has-feedback"><i class="glyphicon glyphicon-briefcase"></i> 
+									共有<span id="totalCount" style="color: purple;"></span> 筆待上架商品
+								</div>
+							</form>
+							<hr style="clear: both;">	
+							<div class="table-responsive">
+								<table class="table  table-bordered">
+									<thead>
+										<tr>
+											<th>#</th>
+										<!-- 	<th width="30"><input id="#" type="checkbox"></th>  -->
+											<th>類別</th>
+											<th>商品編號</th>
+											<th>商品名稱</th>
+											<th>庫存數</th>
+											<th colspan="2">儲位</th>				
+										</tr>
+									</thead>
+									<tbody id="itemPageBody1" ></tbody>
+									<tfoot>
+										<tr>
+											<td colspan="6" align="center">
+												<div id="Pagination" class="pagination"><!-- 這裡顯示分頁 --></div>
+											</td>
+										</tr>
+									</tfoot>
+								</table>
+							</div>
+						</div>	
+						<div id="down" class="tab-pane fade ">
+							<form class="form-inline" role="form" style="float: left;" onsubmit="return false">
+								<div class="form-group has-feedback">
+									<div class="input-group">
+										<div class="input-group-addon">待下架商品</div>
+										<input id="downItemnoInput" class="form-control has-success" type="text"
+											placeholder="請輸入商品編號">
+									</div>
+								</div>
+								<button id="downItemSearchBtn" type="button" class="btn btn-warning">
+									<i class="glyphicon glyphicon-search"></i> 查詢
+								</button>
+							</form>
+							<button type="button" class="btn btn-danger" style="float: right; margin-left: 10px;" id="itemDownBtn">
+								<i class="glyphicon glyphicon-remove"></i> 單品下架
+							</button>
+							<br />
+							<hr style="clear: both;">
+							<div class="table-responsive">
+								<table class="table  table-bordered">
+									<thead>
+										<tr>
+											<th>商品id</th>
+										<!-- 	<th width="30"><input id="#" type="checkbox"></th>  -->
+											<th>類別</th>
+											<th>商品編號</th>
+											<th>商品名稱</th>
+											<th>庫存數</th>
+											<th>儲位</th>
+										</tr>
+									</thead>
+									<tbody id="downItemPageBody">
+										<tr>
+											<td id="itemId1" type="text"></td>
+										<!-- 	<td width="30"><input id="#" type="checkbox"></td>  -->
+											<td id="itemCategory1" type="text"></td>
+											<td id="itemNo1" type="text"></td>
+											<td id="itemName1" type="text"></td>
+											<td id="itemStock1" type="text"></td>
+											<td id="itemAreaAndPosition1" type="text"></td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							
+							<form class="form-inline" role="form" style="float: left;" onsubmit="return false">
+								<div class="form-group has-feedback"><i class="glyphicon glyphicon-briefcase"></i> 
+									共有<span id="downItemTotalCount" style="color: purple;"></span> 筆有儲位,庫存為0的商品
+								</div>
+							</form>
+							<button type="button" class="btn btn-danger" style="float: right; margin-left: 10px;" id="batchItemDownBtn">
+								<i class="glyphicon glyphicon-remove"></i> 批量下架
+							</button>
+							<br/>
+							<hr style="clear: both;">
+							
+							<div class="table-responsive">
+								<table class="table table-bordered">
+									<thead>
+										<tr>
+											<th>#</th>
+											<th width="30"><input id="downItemSummaryBox" type="checkbox"></th>
+											<th>類別</th>
+											<th>商品編號</th>
+											<th>商品名稱</th>
+											<th>庫存數</th>
+											<th>儲位</th>				
+										</tr>
+									</thead>
+									<tbody id="downItemPageBody1" ></tbody>
+									<tfoot>
+										<tr>
+											<td colspan="6" align="center">
+												<div id="downItemPagination" class="pagination"><!-- 這裡顯示分頁 --></div>
+											</td>
+										</tr>
+									</tfoot>
+								</table>
+							</div>
+						</div>				
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div th:replace="~{modal/itemPosition-remove-confirm :: confirmRemoveItemPositionModal}"></div>
+
+</body>
+</html>

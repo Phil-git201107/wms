@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-TW" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="author" content="">
+<base th:href="@{/}" />
+<link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/font-awesome.min.css">
+<script src="jquery/jquery-2.1.1.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="layer/layer.js"></script>
+<script type="text/javascript" src="script/wms/homepage.js"></script>
+<script type="text/javascript">
+	$(function(){
+		// 清空之前select的選中狀態
+		$("#roleSelect").val('0');
+		
+		// roleAssignSearchInput輸入框,按下enter後,觸發roleAssignSearchBtn按鈕的點擊事件
+		// 在form標籤中,添加onsubmit="return false",讓表單默認的提交功能失效
+		$("#roleAssignSearchInput").keydown(function(e){
+			if(e.keyCode == 13){ // 13->表示按下的是enter鍵	
+				$("#roleAssignSearchBtn").click();
+			}
+		});
+	
+		// 輸入人員帳號,返回該員部分資料
+		$("#roleAssignSearchBtn").click(function(){
+			$("#memberInfoBody td[type='text']").text("");
+			var searchVal = $("#roleAssignSearchInput").val();
+			$.ajax({
+				url:"/get/member/info",
+				type:"post",
+				data:{"searchVal":searchVal},
+				success:function(resp){
+					var result = resp.result;	
+					var member = resp.data;	
+					if("SUCCESS" == result){
+						$("#memberId").text(member.memberid);
+						$("#acctname").text(member.acctname);
+						var departNo = member.department;
+						var deptName;
+						switch(departNo){
+							case '1':
+								deptName = '管理成員';
+								break;
+							case '2':
+								deptName = '行政組';
+								break;
+							case '3':
+								deptName = '進貨組';
+								break;
+							case '5':
+								deptName = '出貨組';
+								break;
+						} 
+						$("#department").text(deptName);
+						var role = member.role;
+						var roleName;
+						switch(role){
+							case '0':
+								roleName = '尚未設定職位';
+								break;
+							case '1':
+								roleName = '經理';
+								break;
+							case '2':
+								roleName = '組長';
+								break;
+							case '3':
+								roleName = '作業人員';
+						}
+						$("#roleCurrent").text(roleName);
+						$("#id").val(member.id);
+					}else{
+						layer.msg(resp.message,{
+							icon: 5,
+							time: 3000
+						});
+					}
+				}
+				
+			});
+			// 清空roleAssignSearchInput輸入框的值
+			$("#roleAssignSearchInput").val("");
+			return false;
+		});
+		
+		// 為角色設定提交按鈕綁定點擊事件
+		$("#roleAssignBtn").click(function(){
+			var acctName = $("#acctname").text();
+			var role = $("#roleSelect").find("option:selected").val();
+			var id = $("#id").val();
+			if(role == null){
+				layer.msg("請設定職位",{
+					icon: 7,
+					time: 3000				
+				});
+				return;
+			}
+			$.ajax({
+				url:"/save/member/role/assign",
+				type:"post",
+				data:{
+					"acctName": acctName,
+					"role": role,
+					"id": id},
+				success:function(resp){
+					var result = resp.result;
+					var roleName;
+					switch(role){
+						case '0':
+							roleName = '尚未設定職位';
+							break;
+						case '1':
+							roleName = '經理';
+							break;
+						case '2':
+							roleName = '組長';
+							break;
+						case '3':
+							roleName = '作業人員';
+					}
+					if("SUCCESS" == result){
+						layer.msg(acctName+": 已成功設定職位為:"+roleName,{
+								icon: 6,
+								time: 5000				
+						});
+					}else{
+						layer.msg(resp.message,{
+							icon: 5,
+							time: 5000
+						});
+					}
+				}	
+			});
+			$("#memberInfoBody td[type='text']").text("");
+			// 清空之前select的選中狀態
+			$("#roleSelect").val('0');
+			return false;
+		}); 
+		
+	});
+		
+
+</script>
+<title lang="人員職位設定頁">人員職位設定頁</title>
+</head>
+
+<body>
+	<!-- topnav -->
+	<nav th:replace="~{include/top-nav :: topnav}"></nav>
+	<!-- end of nav -->
+	<div class="container-fluid">
+		<div class="row">
+			<!-- sidenav -->
+			<div th:replace="~{include/side-nav :: sidenav}"></div>
+			<!-- end of sidenav -->
+			<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+				<div class="panel panel-default">
+					<nav class="navbar navbar-light bg-success">
+						<div class="container-fluid">
+							<div class="navbar-header">
+								<a class="navbar-brand"> <span>人員職位設定頁</span>
+								</a>
+							</div>
+						</div>
+					</nav>
+					<div class="panel-body">
+						<form class="form-inline" role="form" style="float: left;" onsubmit="return false">
+							<div class="form-group has-feedback ws-50">
+								<div class="input-group ">
+									<div class="input-group-addon">待設定人員</div>
+									<input id="roleAssignSearchInput" class="form-control" type="text"
+										placeholder="輸入員工編號或名稱">
+							</div>
+							</div>
+							<button id="roleAssignSearchBtn" type="button" class="form-control btn btn-warning">
+								<i class="glyphicon glyphicon-search"></i> 查詢
+							</button>
+						</form>
+						<button type="button" class="btn btn-primary"
+								style="float: right;" id="roleAssignBtn">
+								<i class="glyphicon glyphicon-plus"></i>提交
+						</button>
+						<br/>
+						<hr style="clear: both;">
+						<div class="table-responsive">
+							<table class="table  table-bordered">
+								<thead>
+									<tr>
+										<th>員工編號</th>
+										<th>帳號</th>
+										<th>部門</th>
+										<th>目前職位</th>
+										<th>設定職位</th>	
+										<th type="hidden"></th>		
+									</tr>
+								</thead>
+								<tbody id="memberInfoBody">
+									<tr>
+										<td id="memberId" type="text"></td>
+										<td id="acctname" type="text"></td>
+										<td id="department" type="text"></td>
+										<td id="roleCurrent" type="text"></td>
+										<td><select id="roleSelect">
+												<option value="0" selected="selected">請選擇職位</option>
+												<option value="1">經理</option>
+												<option value="2">組長</option>
+												<option value="3">作業人員</option>
+											</select>
+										</td>
+										<td id="id" type="hidden"></td>
+									</tr>
+								</tbody> 
+								<tfoot></tfoot>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>

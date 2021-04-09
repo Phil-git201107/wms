@@ -1,5 +1,7 @@
 package com.chiczu.wms.handler;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.chiczu.wms.ResultEntity;
 import com.chiczu.wms.entity.po.Commodity;
 import com.chiczu.wms.entity.po.Position;
+import com.chiczu.wms.entity.po.PurchaseOrderCommodity;
+import com.chiczu.wms.entity.po.SingleProductPurchase;
 import com.chiczu.wms.service.api.CommodityService;
 import com.chiczu.wms.service.api.PositionService;
 import com.github.pagehelper.PageInfo;
@@ -26,6 +30,62 @@ public class CommodityHandler {
 	
 	@Autowired
 	private PositionService positionService;
+	
+	@RequestMapping("/save/purchase/order/item")
+	public ResultEntity<List<PurchaseOrderCommodity>> savePurchaseOrderItem(
+			@RequestParam("purchaseOrederNo") String purchaseOrederNo,
+			@RequestParam("itemno") String itemno,
+			@RequestParam("purchaseQuantity") Integer purchaseQuantity){
+		ResultEntity<List<PurchaseOrderCommodity>> result = commodityService.savePurchaseOrderItem(purchaseOrederNo,itemno,purchaseQuantity);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	@RequestMapping("/get/item/from/purchase/order")
+	public ResultEntity<List<Commodity>> getItemFromPurchaseOrder(@RequestParam("purchaseOreder") String purchaseOreder){
+		ResultEntity<List<Commodity>> result = commodityService.getItemFromPurchaseOrder(purchaseOreder);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	@RequestMapping("/get/today/instock/item/info")
+	public ResultEntity<List<SingleProductPurchase>> getTodayInstockItemInfo(){
+		
+		ResultEntity<List<SingleProductPurchase>> result = commodityService.getTodayInstockItemInfo();
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	@RequestMapping("/save/single/item/purchase")
+	public ResultEntity<SingleProductPurchase> saveSingleItemPurchase(
+			@RequestParam("itemno") String itemno,
+			@RequestParam("purchaseAmount") Integer purchaseAmount){
+		ResultEntity<SingleProductPurchase> result = commodityService.saveSingleItemPurchase(itemno, purchaseAmount);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	@RequestMapping("/get/item/to/instock")
+	public ResultEntity<Commodity> getItemToInstock(@RequestParam("itemSearchVal")String itemSearchVal){
+		ResultEntity<Commodity> commodity = commodityService.getCommodityBySearchVal(itemSearchVal);
+		if(ResultEntity.SUCCESS.equals(commodity.getResult())) {
+			return ResultEntity.successWithData(commodity.getData());
+		}else {
+			return ResultEntity.failed(commodity.getMessage());
+		}
+	}
 	
 	@RequestMapping("/create/newitem/data")
 	public ResultEntity<Commodity> insertCommodity(@RequestBody Commodity commodity){

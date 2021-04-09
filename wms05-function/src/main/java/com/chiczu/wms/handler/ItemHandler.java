@@ -25,6 +25,8 @@ import com.chiczu.wms.WmsConstant;
 import com.chiczu.wms.WmsUtil;
 import com.chiczu.wms.api.MySQLRemoteService;
 import com.chiczu.wms.entity.po.Commodity;
+import com.chiczu.wms.entity.po.PurchaseOrderCommodity;
+import com.chiczu.wms.entity.po.SingleProductPurchase;
 import com.chiczu.wms.entity.vo.CommodityDataCreateVO;
 import com.github.pagehelper.PageInfo;
 import com.google.gson.Gson;
@@ -37,9 +39,89 @@ public class ItemHandler {
 	@Autowired
 	private MySQLRemoteService mysqlRemoteService;
 	
+	// 獲取進貨單內已完成進貨的商品資料
+	@ResponseBody
+	@RequestMapping("/get/purchase/order/item/done")
+	public ResultEntity<List<PurchaseOrderCommodity>> getPurchaseOrderItemDone(@RequestParam("purchaseOrederNo") String purchaseOrederNo){
+		ResultEntity<List<PurchaseOrderCommodity>> result = mysqlRemoteService.getPurchaseOrderItemDone(purchaseOrederNo);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	// 為進貨單內的商品,完成進貨動作
+	@ResponseBody
+	@RequestMapping("/save/purchase/order/item")
+	public ResultEntity<List<PurchaseOrderCommodity>> savePurchaseOrderItem(
+			@RequestParam("purchaseOrederNo") String purchaseOrederNo,
+			@RequestParam("itemno") String itemno,
+			@RequestParam("purchaseQuantity") Integer purchaseQuantity){
+		ResultEntity<List<PurchaseOrderCommodity>> result = mysqlRemoteService.savePurchaseOrderItem(purchaseOrederNo,itemno,purchaseQuantity);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	// 依進貨單號,返回待進貨商品資料
+	@ResponseBody
+	@RequestMapping("/get/item/from/purchase/order")
+	public ResultEntity<List<Commodity>> getItemFromPurchaseOrder(@RequestParam("purchaseOreder") String purchaseOreder){
+		purchaseOreder = purchaseOreder.trim().toUpperCase();
+		ResultEntity<List<Commodity>> result = mysqlRemoteService.getItemFromPurchaseOrder(purchaseOreder);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	// 單品進貨
+	@ResponseBody
+	@RequestMapping("/save/single/item/purchase")
+	public ResultEntity<SingleProductPurchase> saveSingleItemPurchase(
+			@RequestParam("itemno") String itemno,
+			@RequestParam("purchaseQuantity") Integer purchaseQuantity){
+		
+		ResultEntity<SingleProductPurchase> result = mysqlRemoteService.saveSingleItemPurchase(itemno,purchaseQuantity);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	// 獲取今日完成進貨的品項
+	@ResponseBody
+	@RequestMapping("/get/today/instock/item/info")
+	public ResultEntity<List<SingleProductPurchase>> getTodayInstockItemInfo(){
+		
+		ResultEntity<List<SingleProductPurchase>> result = mysqlRemoteService.getTodayInstockItemInfo();
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	// 進貨,返回待上架單品項商品資料
+	@ResponseBody
+	@RequestMapping("/get/item/to/instock")
+	public ResultEntity<Commodity> getItemToInstock(@RequestParam("itemSearchVal") String itemSearchVal){
+		ResultEntity<Commodity> commodity = mysqlRemoteService.getItemToInstock(itemSearchVal);
+		if(ResultEntity.SUCCESS.equals(commodity.getResult())) {
+			return ResultEntity.successWithData(commodity.getData());
+		}else {
+			return ResultEntity.failed(commodity.getMessage());
+		}
+	}
+	
 	// 上架,建立商品儲位置
 	@ResponseBody
-	@RequestMapping("/save/item/position")
+	@RequestMapping("/save/item/position")	
 	public ResultEntity<String> saveItemPosition(
 			@RequestParam("itemNo") String itemNo,
 			@RequestParam("area") String area,
@@ -216,9 +298,15 @@ public class ItemHandler {
 		    out.println("alert('商品建檔成功。');");
 		    out.println("history.back();");
 		    out.println("</script>");
-			map.put("successMsg", commodityVO.getItemno()+"商品建檔成功。request");
+			
 		}else {
-			map.put(WmsConstant.ATTR_NAME_ERRORMSG, commoditySaveResult.getMessage());
+			resp.setContentType("text/html; charset=UTF-8"); //轉碼
+		    PrintWriter out = resp.getWriter();
+		    out.flush();
+		    out.println("<script>");
+		    out.println("alert('商品建檔失敗。');");
+		    out.println("history.back();");
+		    out.println("</script>");
 		}	
 		return "item/item-create";
 	}

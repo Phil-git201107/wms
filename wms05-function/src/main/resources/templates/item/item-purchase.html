@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<base th:href="@{/}" />
+<link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/pagination.css"/>
+<script src="jquery/jquery-2.1.1.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="jquery/jquery.pagination.js"></script>
+<script type="text/javascript" src="layer/layer.js"></script>
+<script type="text/javascript" src="script/wms/item-purchase.js"></script>
+<script type="text/javascript">
+
+	$(function(){
+			
+		// 清空itemBody 表格內的值
+		$("#itemBody td[type='text']").text("");
+		$('#purchaseAmount').val('');
+	
+		// itemnoInput輸入框,按下enter後,觸發itemSearchBtn按鈕的點擊事件
+		// 在form標籤中,添加onsubmit="return false",讓表單默認的提交功能失效
+		$("#itemSearchInput").keydown(function(e){
+			if(e.keyCode == 13){ // 13->表示按下的是enter鍵	
+				$("#instockItemSearchBtn").click();
+			}
+		});
+	
+		// 輸入商品編號,返回該品項名稱、庫存等商品資料
+		$("#instockItemSearchBtn").click(function(){
+			$("#itemBody td[type='text']").text("");
+			$('#instockAmount').val('');
+			var itemSearchVal = $("#itemSearchInput").val();
+			$.ajax({
+				url:"/get/item/to/instock",
+				type:"post",
+				data:{"itemSearchVal":itemSearchVal},
+				success:function(resp){
+					var result = resp.result;	
+					var commodity = resp.data;	
+					if("SUCCESS" == result){
+						$("#itemId").text(commodity.id);
+						$("#itemCategory").text(commodity.category);
+						$("#itemNo").text(commodity.itemno);
+						$("#itemName").text(commodity.name);
+						$("#itemCurrentStock").text(commodity.inventory);
+						if(commodity.position != null){
+							$('#itemAreaAndPosition').text(commodity.position.area+'-'+commodity.position.positionNo);
+						}else{
+							$('#itemAreaAndPosition').text('尚無儲位');
+						}
+						
+					}else{
+						layer.msg(resp.message,{
+							icon: 5,
+							time: 3000
+						});
+					}
+				}
+				
+			});
+			// 清空itemSearchInput輸入框的值
+			$("#itemSearchInput").val("");
+			return false;
+		});
+		
+		// 單一商品進貨按鈕綁定點擊事件
+		$("#itemPurchaseBtn").click(function(){
+			var itemno = $("#itemNo").text();
+			var itemCurrentStock = $('#itemCurrentStock').text();
+			var purchaseQuantity = $('#purchaseAmount').val();
+			if(itemno == "" || purchaseAmount == "" ){
+				layer.msg("請先輸入待進貨商品資料,並輸入進貨數量後再提交!",{
+					icon: 7,
+					time: 3000				
+				});
+				return;
+			}
+			$.ajax({
+				url:"/save/single/item/purchase",
+				type:"post",
+				data:{
+					"itemno":itemno,
+					"purchaseQuantity":purchaseQuantity},
+				success:function(resp){
+					var result = resp.result;
+					var purchaseItemList = resp.data;
+					if("SUCCESS" == result){
+						layer.msg(itemno+": 進貨數量已登入!",{
+								icon: 3,
+								time: 3000				
+						});
+						getInstockItem();
+					}else{
+						layer.msg(resp.message,{
+							icon: 5,
+							time: 3000
+						});
+					}
+				}	
+			});
+			$("#itemBody td[type='text']").text("");
+			$('#purchaseAmount').val('');
+			return false;
+		});
+		
+		// 顯示今日已完成的進貨資料
+		getInstockItem();
+		
+		// 顯示日期
+		var date = new Date();
+		var today = date.getFullYear()+'年'+(date.getMonth()+1)+'月'+date.getDate()+'日';
+		$('#currentDate').text(today);
+		
+	});
+	
+</script>
+<title lang="單項商品進貨頁">單項商品進貨頁</title>
+</head>
+
+<body>
+	<!-- topnav -->
+	<nav th:replace="~{include/top-nav :: topnav}"></nav>
+	<!-- end of nav -->
+	<div class="container-fluid">
+		<div class="row">
+			<!-- sidenav -->
+			<div th:replace="~{include/side-nav :: sidenav}"></div>
+			<!-- end of sidenav -->
+			<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+				<div class="panel panel-default">
+					<nav class="navbar navbar-light bg-success"
+						th:fragment="instock-navbar">
+						<div class="container-fluid">
+							<div class="navbar-header">
+								<a class="navbar-brand"> <span>商品進貨專區</span>
+								</a>
+								<button class="navbar-toggle collapsed" data-toggle="collapse"
+									data-target="#navbar-menu">
+									<span class="sr-only">畫面縮小時的導覽按鈕</span> <span class="icon-bar"
+										style="background-color: gray;"></span> <span class="icon-bar"
+										style="background-color: gray;"></span> <span class="icon-bar"
+										style="background-color: gray;"></span>
+								</button>
+							</div>
+							<div id="navbar-menu" class="navbar-collapse collapse">
+								<ul class="nav navbar-nav">
+									<li class="active"><a href="#" data-toggle="tab"
+										style="color: purple;"></span>單品項進貨</a></li>
+								</ul>
+							</div>
+						</div>
+					</nav>
+					<div class="container">
+						
+					</div>	
+					<div class="panel-body tab-content">
+						<div id="singleItem" class="tab-pane fade in active"> 
+							<form class="form-inline" role="form" style="float: left;" onsubmit="return false">
+								<div class="form-group has-feedback">
+									<div class="input-group">
+										<div class="input-group-addon">待進貨商品</div>
+										<input id="itemSearchInput" class="form-control has-success" type="text"
+											placeholder="請輸入商品編號或名稱">
+									</div>
+								</div>
+								<button id="instockItemSearchBtn" type="button" class="btn btn-warning">
+									<i class="glyphicon glyphicon-search"></i> 查詢
+								</button>
+							</form>
+							<button type="button" class="btn btn-primary"
+								style="float: right;" id="itemPurchaseBtn">
+								<i class="glyphicon glyphicon-plus"></i>提交進貨
+							</button>
+
+							<br/>
+							<hr style="clear: both;">
+							<div class="table-responsive">
+								<table class="table table-bordered">
+									<thead>
+										<tr>
+											<th>商品id</th>
+											<th>類別</th>
+											<th>商品編號</th>
+											<th>商品名稱</th>
+											<th>目前庫存數</th>
+											<th>儲位</th>
+											<th>進貨數量</th>
+										</tr>
+									</thead>
+									<tbody id="itemBody">
+										<tr>
+											<td id="itemId" type="text"></td>
+											<td id="itemCategory" type="text"></td>
+											<td id="itemNo" type="text"></td>
+											<td id="itemName" type="text"></td>
+											<td id="itemCurrentStock" type="text"></td>
+											<td id="itemAreaAndPosition" type="text"></td>
+											<td><input id="purchaseAmount"></td>
+										</tr>
+									</tbody> 		
+								</table>
+							</div>	
+							
+							<div class="form-group has-feedback"><i class="glyphicon glyphicon-briefcase"></i> 
+								今天 <span id="currentDate" style="color: purple;"></span>, 進貨品項如下。
+								<span id="purchaseCount" style="color: purple;"></span>
+							</div>
+							<hr style="clear: both;">	
+							<div class="table-responsive">
+								<table class="table  table-bordered">
+									<thead>
+										<tr>
+											<th>#</th>
+											<th>類別</th>
+											<th>商品編號</th>
+											<th>商品名稱</th>
+											<th>進貨數量(庫存量)</th>	
+											<th>此品項今天第幾筆</th>		
+										</tr>
+									</thead>
+									<tbody id="purchaseItemBody" ></tbody>
+									<tfoot>
+										<tr>
+											<td colspan="6" align="center">
+												<div id="Pagination" class="pagination"><!-- 這裡顯示分頁導航條 --></div>
+											</td>
+										</tr>
+									</tfoot>
+								</table>
+							</div>
+						</div>		
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>

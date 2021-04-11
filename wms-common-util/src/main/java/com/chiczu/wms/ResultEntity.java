@@ -14,7 +14,7 @@ public class ResultEntity<T> {
 	private String result;
 	
 	//請求失敗時,返回的錯誤訊息
-	private String msg;
+	private String message;
 	
 	//要返回的資料
 	private T data;
@@ -38,8 +38,8 @@ public class ResultEntity<T> {
 	 * 請求處理失敗後使用的方法
 	 * msg:是錯誤訊息
 	 */
-	public static <Type>ResultEntity<Type> failed(String msg) {
-		return new ResultEntity<Type>(FAILED,msg,null);
+	public static <Type>ResultEntity<Type> failed(String message) {
+		return new ResultEntity<Type>(FAILED,message,null);
 	}
 
 	public String getResult() {
@@ -50,12 +50,12 @@ public class ResultEntity<T> {
 		this.result = result;
 	}
 
-	public String getMsg() {
-		return msg;
+	public String getMessage() {
+		return message;
 	}
 
-	public void setMsg(String msg) {
-		this.msg = msg;
+	public void setMessage(String msg) {
+		this.message = msg;
 	}
 
 	public T getData() {
@@ -68,12 +68,12 @@ public class ResultEntity<T> {
 
 	@Override
 	public String toString() {
-		return "ResultEntity [result=" + result + ", msg=" + msg + ", data=" + data + "]";
+		return "ResultEntity [result=" + result + ", msg=" + message + ", data=" + data + "]";
 	}
 
-	public ResultEntity(String result, String msg, T data) {
+	public ResultEntity(String result, String message, T data) {
 		this.result = result;
-		this.msg = msg;
+		this.message = message;
 		this.data = data;
 	}
 

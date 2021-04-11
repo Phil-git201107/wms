@@ -35,7 +35,7 @@
 			$('#instockAmount').val('');
 			var itemSearchVal = $("#itemSearchInput").val();
 			$.ajax({
-				url:"/get/item/to/instock",
+				url:"/get/item/to/instock-shipment",
 				type:"post",
 				data:{"itemSearchVal":itemSearchVal},
 				success:function(resp){

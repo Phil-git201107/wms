@@ -19,11 +19,14 @@ import com.chiczu.wms.entity.po.PurchaseOrderCommodityExample;
 import com.chiczu.wms.entity.po.PurchaseOrderExample;
 import com.chiczu.wms.entity.po.SingleProductPurchase;
 import com.chiczu.wms.entity.po.SingleProductPurchaseExample;
+import com.chiczu.wms.entity.po.SingleProductShip;
+import com.chiczu.wms.entity.po.SingleProductShipExample;
 import com.chiczu.wms.mapper.CommodityMapper;
 import com.chiczu.wms.mapper.PositionMapper;
 import com.chiczu.wms.mapper.PurchaseOrderCommodityMapper;
 import com.chiczu.wms.mapper.PurchaseOrderMapper;
 import com.chiczu.wms.mapper.SingleProductPurchaseMapper;
+import com.chiczu.wms.mapper.SingleProductShipMapper;
 import com.chiczu.wms.service.api.CommodityService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -39,6 +42,8 @@ public class CommodityServiceImpl implements CommodityService{
 	private PositionMapper positionMapper;
 	@Autowired
 	private SingleProductPurchaseMapper sppMapper;
+	@Autowired
+	private SingleProductShipMapper spsMapper;
 	@Autowired
 	private PurchaseOrderCommodityMapper poCommodityMapper;
 	@Autowired
@@ -199,10 +204,10 @@ public class CommodityServiceImpl implements CommodityService{
 
 	@Override
 	public ResultEntity<SingleProductPurchase> saveSingleItemPurchase(String itemno, Integer purchaseAmount) {
-		// 獲取原來商品
+		// 獲取進貨商品
 		List<Commodity> list = commodityMapper.selectCommodityByItemNo(itemno);
 		Commodity commodity = list.get(0);
-		// 獲得原來商品庫存
+		// 獲得進貨商品原來庫存
 		Integer inventoryOld = commodity.getInventory();
 		// 將進貨量加入原來庫存量後存回資料庫
 		Integer inventoryNew = inventoryOld + purchaseAmount;
@@ -242,6 +247,50 @@ public class CommodityServiceImpl implements CommodityService{
 		}
 					
 	}
+	
+	@Override
+	public ResultEntity<SingleProductShip> saveSingleItemShip(String itemno, Integer itemCurrentStock,
+			Integer shipAmount) {
+		// 獲取出貨商品資料
+		List<Commodity> list = commodityMapper.selectCommodityByItemNo(itemno);
+		Commodity commodity = list.get(0);
+		// 將庫存量減去出貨量後,更新出或商品庫存數
+		Integer inventoryNew = itemCurrentStock - shipAmount;
+		int updateInventory = commodityMapper.updateInventoryByItemno(itemno,inventoryNew);
+		if(updateInventory > 0) {
+			// 封裝資料入商品出貨類SingleProductShip返回給頁面
+			// 先確認該品項當天是第幾筆輸入出貨量
+			SingleProductShipExample spsExample = new SingleProductShipExample();
+			com.chiczu.wms.entity.po.SingleProductShipExample.Criteria spsCriteria = spsExample.createCriteria();
+			spsCriteria.andItemnoEqualTo(itemno).andShipdateEqualTo(WmsUtil.getCurrentDate());
+			List<SingleProductShip> spsSelectList = spsMapper.selectByExample(spsExample);
+			SingleProductShip sps = new SingleProductShip();
+			if(spsSelectList.size() > 0) {
+				// 根據itemno與spsdate,獲取當天最大的count(即當天輸入進貨量第?筆)
+				int maxCount = spsMapper.selectMaxCount(itemno,WmsUtil.getCurrentDate());
+				// 將當天第?筆進貨封裝入商品進貨類
+				sps.setCount(maxCount+1);
+			}else {
+				sps.setCount(1);
+			}
+			// 將其他資料封裝入商品進貨類
+			sps.setCategory(commodity.getCategory());
+			sps.setItemno(itemno);
+			sps.setName(commodity.getName());
+			sps.setShipAmount(shipAmount);
+			sps.setInventory(inventoryNew);
+			sps.setShipdate(WmsUtil.getCurrentDate());
+			// 將商品資料類存入資料庫
+			int insert = spsMapper.insert(sps);
+			if(insert > 0) {
+				return ResultEntity.successWithData(sps);
+			}else {
+				return ResultEntity.failed("存入單一商品出貨檔資料失敗!");
+			}
+		}else {
+			return ResultEntity.failed("更新商品類庫存檔資料失敗!");
+		}
+	}
 
 	@Override
 	public ResultEntity<List<SingleProductPurchase>> getTodayInstockItemInfo() {
@@ -257,6 +306,23 @@ public class CommodityServiceImpl implements CommodityService{
 			return ResultEntity.successWithData(list);
 		}else {
 			return ResultEntity.failed("今日尚無完成任何商品進貨");
+		}
+	}
+	
+	@Override
+	public ResultEntity<List<SingleProductShip>> getTodayShipmentItemInfo() {
+		logger.info("CommodityServiceImpl-getTodayShipmentItemInfo come in");
+		SingleProductShipExample spsExample = new SingleProductShipExample();
+		com.chiczu.wms.entity.po.SingleProductShipExample.Criteria spsCriteria = spsExample.createCriteria();
+		spsCriteria.andShipdateEqualTo(WmsUtil.getCurrentDate());
+		List<SingleProductShip> list = spsMapper.selectByExample(spsExample);
+		for (SingleProductShip singleProductShip : list) {
+			logger.info(""+singleProductShip.getInventory());
+		}
+		if(list.size() > 0) {
+			return ResultEntity.successWithData(list);
+		}else {
+			return ResultEntity.failed("今日尚無完成任何商品出貨。");
 		}
 	}
 
@@ -314,6 +380,10 @@ public class CommodityServiceImpl implements CommodityService{
 		return ResultEntity.successWithoutData();
 		
 	}
+
+	
+
+	
 
 	
 }

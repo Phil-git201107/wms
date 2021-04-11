@@ -9,11 +9,12 @@ import com.google.code.kaptcha.impl.DefaultKaptcha;
 import com.google.code.kaptcha.util.Config;
 
 /**
+ * google驗證碼Kaptcha配置類
  * 使用google驗證碼,由三個部分組成
  * 1.網頁上
  * 2.配置類
  * 3.handler中獲取驗證碼
- * google驗證碼Kaptcha配置類
+ * 
  * @author Phil
  *
  */

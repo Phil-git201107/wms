@@ -6,6 +6,7 @@ import com.chiczu.wms.ResultEntity;
 import com.chiczu.wms.entity.po.Commodity;
 import com.chiczu.wms.entity.po.PurchaseOrderCommodity;
 import com.chiczu.wms.entity.po.SingleProductPurchase;
+import com.chiczu.wms.entity.po.SingleProductShip;
 import com.github.pagehelper.PageInfo;
 
 public interface CommodityService {
@@ -33,6 +34,10 @@ public interface CommodityService {
 	ResultEntity<List<Commodity>> getItemFromPurchaseOrder(String purchaseOreder);
 
 	ResultEntity<List<PurchaseOrderCommodity>> savePurchaseOrderItem(String purchaseOrederNo,String itemno, Integer purchaseQuantity);
+
+	ResultEntity<List<SingleProductShip>> getTodayShipmentItemInfo();
+
+	ResultEntity<SingleProductShip> saveSingleItemShip(String itemno, Integer itemCurrentStock, Integer shipAmount);
 
 
 }

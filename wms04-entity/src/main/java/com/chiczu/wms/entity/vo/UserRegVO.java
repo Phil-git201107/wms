@@ -3,31 +3,33 @@ package com.chiczu.wms.entity.vo;
 
 public class UserRegVO {
 
-	private String acctName;
+	private String acctname;
 	private String password;
-	private String nickName;
+	private String nickname;
 	private String email;
-	private String code;
+	private String code; // 封裝郵件驗證碼
+	private String department; // 1:管理成員;2:行政組;3:進貨-儲位組;5:出貨組
 	
 	public UserRegVO() {
 		super();
 	}
 
-	public UserRegVO(String acctName, String password, String nickName, String email, String code) {
+	public UserRegVO(String acctname, String password, String nickname, String email, String code, String department) {
 		super();
-		this.acctName = acctName;
+		this.acctname = acctname;
 		this.password = password;
-		this.nickName = nickName;
+		this.nickname = nickname;
 		this.email = email;
 		this.code = code;
+		this.department = department;
 	}
 
-	public String getAcctName() {
-		return acctName;
+	public String getAcctname() {
+		return acctname;
 	}
 
-	public void setAcctName(String acctName) {
-		this.acctName = acctName;
+	public void setAcctname(String acctname) {
+		this.acctname = acctname;
 	}
 
 	public String getPassword() {
@@ -38,12 +40,12 @@ public class UserRegVO {
 		this.password = password;
 	}
 
-	public String getNickName() {
-		return nickName;
+	public String getNickname() {
+		return nickname;
 	}
 
-	public void setNickName(String nickName) {
-		this.nickName = nickName;
+	public void setNickname(String nickname) {
+		this.nickname = nickname;
 	}
 
 	public String getEmail() {
@@ -62,11 +64,20 @@ public class UserRegVO {
 		this.code = code;
 	}
 
+	public String getDepartment() {
+		return department;
+	}
+
+	public void setDepartment(String department) {
+		this.department = department;
+	}
+
 	@Override
 	public String toString() {
-		return "UserRegVO [acctName=" + acctName + ", password=" + password + ", nickName=" + nickName + ", email="
-				+ email + ", code=" + code + "]";
+		return "UserRegVO [acctname=" + acctname + ", password=" + password + ", nickname=" + nickname + ", email="
+				+ email + ", code=" + code + ", department=" + department + "]";
 	}
+	
 	
 	
 }

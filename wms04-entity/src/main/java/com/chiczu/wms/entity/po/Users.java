@@ -11,13 +11,47 @@ public class Users {
 
     private String email;
 
-    private String department;
+    private String department; // 1:管理成員;2:行政組;3:進貨組;5:出貨組
 
-    private Integer role;
+    private String role = "0"; // 1:經理;2:組長;3:作業人員
+    
+    private String memberid; // 以createdate加序號兩碼組成,例如createdate是2021-03-17,則員工編號為2021031701...
 
-    private String createdate;
+    public String getMemberid() {
+		return memberid;
+	}
 
-    public Integer getId() {
+	public void setMemberid(String memberid) {
+		this.memberid = memberid;
+	}
+
+	private String createdate;
+    
+    @Override
+	public String toString() {
+		return "Users [id=" + id + ", acctname=" + acctname + ", password=" + password + ", nickname=" + nickname
+				+ ", email=" + email + ", department=" + department + ", role=" + role + ", createdate=" + createdate
+				+ "]";
+	}
+
+	public Users() {
+		super();
+	}
+
+	public Users(Integer id, String acctname, String password, String nickname, String email, String department,
+			String role, String createdate) {
+		super();
+		this.id = id;
+		this.acctname = acctname;
+		this.password = password;
+		this.nickname = nickname;
+		this.email = email;
+		this.department = department;
+		this.role = role;
+		this.createdate = createdate;
+	}
+
+	public Integer getId() {
         return id;
     }
 
@@ -65,11 +99,11 @@ public class Users {
         this.department = department == null ? null : department.trim();
     }
 
-    public Integer getRole() {
+    public String getRole() {
         return role;
     }
 
-    public void setRole(Integer role) {
+    public void setRole(String role) {
         this.role = role;
     }
 

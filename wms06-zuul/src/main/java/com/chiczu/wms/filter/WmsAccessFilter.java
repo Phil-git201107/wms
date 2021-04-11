@@ -60,7 +60,7 @@ public class WmsAccessFilter extends ZuulFilter{
 			// 將提示錯誤訊息存入session域
 			session.setAttribute(
 					WmsConstant.ATTR_NAME_ERRORMSG, WmsConstant.MESSAGE_ACCESS_DENIED);
-			// 重定向到auth-consumer中的登錄頁面
+			// 重定向到登錄頁面
 			try {
 				response.sendRedirect("/member/to/loginpage");
 			} catch (IOException e) {

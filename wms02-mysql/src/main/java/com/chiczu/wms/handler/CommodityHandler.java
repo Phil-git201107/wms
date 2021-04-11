@@ -15,6 +15,7 @@ import com.chiczu.wms.entity.po.Commodity;
 import com.chiczu.wms.entity.po.Position;
 import com.chiczu.wms.entity.po.PurchaseOrderCommodity;
 import com.chiczu.wms.entity.po.SingleProductPurchase;
+import com.chiczu.wms.entity.po.SingleProductShip;
 import com.chiczu.wms.service.api.CommodityService;
 import com.chiczu.wms.service.api.PositionService;
 import com.github.pagehelper.PageInfo;
@@ -65,6 +66,16 @@ public class CommodityHandler {
 		}
 	}
 	
+	@RequestMapping("/get/today/shipment/item/info")
+	public ResultEntity<List<SingleProductShip>> getTodayShipmentItemInfo(){
+		ResultEntity<List<SingleProductShip>> result = commodityService.getTodayShipmentItemInfo();
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
 	@RequestMapping("/save/single/item/purchase")
 	public ResultEntity<SingleProductPurchase> saveSingleItemPurchase(
 			@RequestParam("itemno") String itemno,
@@ -77,8 +88,21 @@ public class CommodityHandler {
 		}
 	}
 	
-	@RequestMapping("/get/item/to/instock")
-	public ResultEntity<Commodity> getItemToInstock(@RequestParam("itemSearchVal")String itemSearchVal){
+	@RequestMapping("/save/single/item/shipment")
+	public ResultEntity<SingleProductShip> saveSingleItemShip(
+			@RequestParam("itemno") String itemno,
+			@RequestParam("itemCurrentStock")Integer itemCurrentStock,
+			@RequestParam("shipAmount") Integer shipAmount){
+		ResultEntity<SingleProductShip> result = commodityService.saveSingleItemShip(itemno,itemCurrentStock, shipAmount);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	@RequestMapping("/get/item/to/instock-shipment")
+	public ResultEntity<Commodity> getItemToInstockOrShipment(@RequestParam("itemSearchVal")String itemSearchVal){
 		ResultEntity<Commodity> commodity = commodityService.getCommodityBySearchVal(itemSearchVal);
 		if(ResultEntity.SUCCESS.equals(commodity.getResult())) {
 			return ResultEntity.successWithData(commodity.getData());

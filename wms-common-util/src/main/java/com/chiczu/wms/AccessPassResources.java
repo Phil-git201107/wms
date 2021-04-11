@@ -18,6 +18,10 @@ public class AccessPassResources {
 		PASS_RES_SET.add("/member/do/login");
 		PASS_RES_SET.add("/member/logout");
 		PASS_RES_SET.add("/getCode");
+		PASS_RES_SET.add("/member/do/sendEmail");
+		PASS_RES_SET.add("/get/page/info");
+		PASS_RES_SET.add("/member/to/item/up-down");
+		PASS_RES_SET.add("/to/test");
 	}
 	
 	public static final Set<String> STATIC_RES_SET = new HashSet<>();

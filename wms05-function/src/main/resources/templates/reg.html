@@ -78,6 +78,7 @@
 				<i class="glyphicon glyphicon-log-in"></i> 用戶註冊
 			</h2>
 			<p th:text="${errorMsg}" style="color: red;">這裡顯示從請求域取出的錯誤訊息</p>
+			<!-- 為紀錄郵件驗證碼而設置 -->
 			<input type="hidden" name="token" id="hiddenInput">
 			<div class="form-group has-success has-feedback">
 				<input type="text" name="acctname" class="form-control" placeholder="請輸入登錄帳號" 

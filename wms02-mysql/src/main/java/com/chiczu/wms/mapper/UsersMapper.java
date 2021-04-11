@@ -4,6 +4,7 @@ import com.chiczu.wms.entity.po.Users;
 import com.chiczu.wms.entity.po.UsersExample;
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.web.bind.annotation.RequestParam;
 
 public interface UsersMapper {
     int countByExample(UsersExample example);
@@ -27,4 +28,8 @@ public interface UsersMapper {
     int updateByPrimaryKeySelective(Users record);
 
     int updateByPrimaryKey(Users record);
+
+	List<Users> selectUserBySearchVal(@RequestParam("searchVal") String searchVal);
+
+	int updateMemberRole(@Param("acctName")String acctName, @Param("role")String role);
 }

@@ -17,6 +17,15 @@
 <script type="text/javascript">
 
 	$(function(){
+		
+		//為分頁操作準備初始化資料(設置為window的全局變量)
+		window.pageNum = 1;
+		window.pageSize = 5;
+		//調用商品上架執行分頁的函數	
+		generateItemPage();
+		//調用商品下架執行分頁的函數	
+		generateItemDownPage()
+		
 		// 清空itemNo輸入框的值
 		$("#itemnoInput").val("");
 		$("#downItemnoInput").val("");
@@ -253,13 +262,7 @@
 		});
 		
 		
-		//為分頁操作準備初始化資料(設置為window的全局變量)
-		window.pageNum = 1;
-		window.pageSize = 5;
-		//調用商品上架執行分頁的函數	
-		generateItemPage();
-		//調用商品下架執行分頁的函數	
-		generateItemDownPage()
+		
 		
 	});
 	

@@ -27,6 +27,7 @@ import com.chiczu.wms.api.MySQLRemoteService;
 import com.chiczu.wms.entity.po.Commodity;
 import com.chiczu.wms.entity.po.PurchaseOrderCommodity;
 import com.chiczu.wms.entity.po.SingleProductPurchase;
+import com.chiczu.wms.entity.po.SingleProductShip;
 import com.chiczu.wms.entity.vo.CommodityDataCreateVO;
 import com.github.pagehelper.PageInfo;
 import com.google.gson.Gson;
@@ -94,6 +95,25 @@ public class ItemHandler {
 		}
 	}
 	
+	// 單品出貨
+	@ResponseBody
+	@RequestMapping("/save/single/item/shipment")
+	public ResultEntity<SingleProductShip> saveSingleItemShip(
+			@RequestParam("itemno") String itemno,
+			@RequestParam("itemCurrentStock")Integer itemCurrentStock,
+			@RequestParam("shipAmount") Integer shipAmount){
+		if( shipAmount > itemCurrentStock) {
+			return ResultEntity.failed("出貨量大於庫存量,請確認庫存數或調整出貨量。");
+		}
+		
+		ResultEntity<SingleProductShip> result = mysqlRemoteService.saveSingleItemShip(itemno,itemCurrentStock,shipAmount);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
 	// 獲取今日完成進貨的品項
 	@ResponseBody
 	@RequestMapping("/get/today/instock/item/info")
@@ -107,11 +127,24 @@ public class ItemHandler {
 		}
 	}
 	
-	// 進貨,返回待上架單品項商品資料
+	// 單品出貨 
 	@ResponseBody
-	@RequestMapping("/get/item/to/instock")
-	public ResultEntity<Commodity> getItemToInstock(@RequestParam("itemSearchVal") String itemSearchVal){
-		ResultEntity<Commodity> commodity = mysqlRemoteService.getItemToInstock(itemSearchVal);
+	@RequestMapping("/get/today/shipment/item/info")
+	public ResultEntity<List<SingleProductShip>> getTodayShipmentItemInfo(){
+		
+		ResultEntity<List<SingleProductShip>> result = mysqlRemoteService.getTodayShipmentItemInfo();
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	// 進貨-出貨,返回待進貨/出貨單品項商品資料
+	@ResponseBody
+	@RequestMapping("/get/item/to/instock-shipment")
+	public ResultEntity<Commodity> getItemToInstockOrShipment(@RequestParam("itemSearchVal") String itemSearchVal){
+		ResultEntity<Commodity> commodity = mysqlRemoteService.getItemToInstockOrShipment(itemSearchVal);
 		if(ResultEntity.SUCCESS.equals(commodity.getResult())) {
 			return ResultEntity.successWithData(commodity.getData());
 		}else {

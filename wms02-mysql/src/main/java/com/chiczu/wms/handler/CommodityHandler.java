@@ -32,6 +32,16 @@ public class CommodityHandler {
 	@Autowired
 	private PositionService positionService;
 	
+	@RequestMapping("/get/item/to/adjust/position/page")
+	public ResultEntity<Commodity> getItemToAdjustPositionPage(@RequestParam("itemno") String itemno){
+		ResultEntity<Commodity> result = commodityService.getItemToAdjustPositionPage(itemno);
+		if("SUCCESS".equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
 	@RequestMapping("/save/purchase/order/item")
 	public ResultEntity<List<PurchaseOrderCommodity>> savePurchaseOrderItem(
 			@RequestParam("purchaseOrederNo") String purchaseOrederNo,
@@ -48,6 +58,16 @@ public class CommodityHandler {
 	@RequestMapping("/get/item/from/purchase/order")
 	public ResultEntity<List<Commodity>> getItemFromPurchaseOrder(@RequestParam("purchaseOreder") String purchaseOreder){
 		ResultEntity<List<Commodity>> result = commodityService.getItemFromPurchaseOrder(purchaseOreder);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	@RequestMapping("/get/item/from/ship/order")
+	public ResultEntity<List<Commodity>> getItemFromShipOrder(@RequestParam("shipOrederNo") String shipOrederNo){
+		ResultEntity<List<Commodity>> result = commodityService.getItemFromShipOrder(shipOrederNo);
 		if(ResultEntity.SUCCESS.equals(result.getResult())) {
 			return ResultEntity.successWithData(result.getData());
 		}else {

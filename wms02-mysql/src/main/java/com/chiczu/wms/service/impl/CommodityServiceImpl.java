@@ -1,6 +1,8 @@
 package com.chiczu.wms.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,8 @@ import com.chiczu.wms.entity.po.PurchaseOrder;
 import com.chiczu.wms.entity.po.PurchaseOrderCommodity;
 import com.chiczu.wms.entity.po.PurchaseOrderCommodityExample;
 import com.chiczu.wms.entity.po.PurchaseOrderExample;
+import com.chiczu.wms.entity.po.ShipOrder;
+import com.chiczu.wms.entity.po.ShipOrderCommodityExample;
 import com.chiczu.wms.entity.po.SingleProductPurchase;
 import com.chiczu.wms.entity.po.SingleProductPurchaseExample;
 import com.chiczu.wms.entity.po.SingleProductShip;
@@ -25,6 +29,8 @@ import com.chiczu.wms.mapper.CommodityMapper;
 import com.chiczu.wms.mapper.PositionMapper;
 import com.chiczu.wms.mapper.PurchaseOrderCommodityMapper;
 import com.chiczu.wms.mapper.PurchaseOrderMapper;
+import com.chiczu.wms.mapper.ShipOrderCommodityMapper;
+import com.chiczu.wms.mapper.ShipOrderMapper;
 import com.chiczu.wms.mapper.SingleProductPurchaseMapper;
 import com.chiczu.wms.mapper.SingleProductShipMapper;
 import com.chiczu.wms.service.api.CommodityService;
@@ -48,6 +54,12 @@ public class CommodityServiceImpl implements CommodityService{
 	private PurchaseOrderCommodityMapper poCommodityMapper;
 	@Autowired
 	private PurchaseOrderMapper poMapper; 
+	@Autowired
+	private ShipOrderMapper soMapper;
+	@Autowired
+	private ShipOrderCommodityMapper soCommodityMapper;
+	
+	
 	
 	@Override
 	public PageInfo<Commodity> getNotUpItemPageInfo(Integer pageNum, Integer pageSize) {
@@ -349,6 +361,42 @@ public class CommodityServiceImpl implements CommodityService{
 		
 		
 	}
+	
+	@Override
+	public ResultEntity<List<Commodity>> getItemFromShipOrder(String shipOrederNo) {
+		// 確認是否有這筆訂單
+		ShipOrder so = soMapper.selectByPrimaryKey(shipOrederNo);
+		if(so != null) {
+			// 有這筆訂單,確認這筆訂單是否已完成進貨fulfill=0,表示完成進貨;fulfill=1,表示未完成進貨
+			String fulfill = so.getFulfill();
+			if("1".equals(fulfill)) {
+				List<Commodity> list = commodityMapper.selectCommodityByShipOrder(shipOrederNo);
+				// 獲取commodity的倉儲位置
+				String itemno;
+				Position position;
+				for (int i = 0; i < list.size(); i++) {
+					itemno = list.get(i).getItemno();
+					// 根據itemno,自position表獲取庫存位置position
+					position = positionMapper.selectItemPosition(itemno);
+					// 將position設置回commodity
+					if (position != null ) {
+						list.get(i).setPosition(position);
+					}else {
+						list.get(i).setPosition(new Position("","","",itemno));	
+					}
+				}
+				return ResultEntity.successWithData(list);
+			}else {
+				ShipOrderCommodityExample example = new ShipOrderCommodityExample();
+				com.chiczu.wms.entity.po.ShipOrderCommodityExample.Criteria criteria = example.createCriteria();
+				criteria.andOrderidEqualTo(shipOrederNo);
+				int countByExample = soCommodityMapper.countByExample(example);
+				return ResultEntity.failed(shipOrederNo+" 出貨單,共有 "+countByExample+" 個品項,已全數完成出貨!");
+			}
+		}else {
+			return ResultEntity.failed("查無此出貨單號資料。");
+		}
+	}
 
 	@Override
 	public ResultEntity<List<PurchaseOrderCommodity>> savePurchaseOrderItem(String purchaseOrederNo,String itemno, Integer purchaseQuantity) {
@@ -381,9 +429,52 @@ public class CommodityServiceImpl implements CommodityService{
 		
 	}
 
-	
+	@Override
+	public ResultEntity<Commodity> getItemToAdjustPositionPage(String itemno) {
+		List<Commodity> list = commodityMapper.selectCommodityByItemNo(itemno);
+		if(list.size() > 0) {
+			Commodity commodity = list.get(0);
+			Position itemPosition = positionMapper.selectItemPosition(itemno);
+			commodity.setPosition(itemPosition);
+			return ResultEntity.successWithData(commodity);
+		}else {
+			return ResultEntity.failed("查無 "+itemno+" 的商品資料。");
+		}
+		
+		
+	}
 
-	
+	@Override
+	public ResultEntity<List<Commodity>> generateCheckItemAmountList(Integer checkAmount) {
+		// 獲取所有架上的商品資料
+		logger.info("CommodityServiceImpl: "+checkAmount);
+		List<Commodity> list = commodityMapper.selectCommodityForCheckAmount();
+		if(checkAmount > list.size()) {
+			return ResultEntity.failed("您輸入的數量: "+checkAmount+",超過架上商品數: "+list.size());
+		}
+		
+		for (Commodity commodity : list) {
+			// 依itemno,將儲位資料傳入commodity
+			Position position = positionMapper.selectItemPosition(commodity.getItemno());
+			commodity.setPosition(position);
+		}
+		// 依用戶要求數量,隨機取出商品來盤點
+		Set<Integer> nonRepetitiveRandomIndexes = WmsUtil.getNonRepetitiveRandomIndexes(checkAmount, list);
+		String string = nonRepetitiveRandomIndexes.toString();
+		logger.info(string);
+		List<Commodity> checkItemList = new ArrayList<>();
+		for (Integer integer : nonRepetitiveRandomIndexes) {
+			checkItemList.add(list.get(integer));
+		}
+		if(checkItemList.size() > 0) {
+			return ResultEntity.successWithData(checkItemList);
+		}else {
+			return ResultEntity.failed("未能產出盤點資料,請依流程再操作一次。");
+		}
+		// 將生成的盤點資料,傳入盤點表類 check_order與盤點商品類 check_order_commodity
+		
+		
+	}
 
 	
 }

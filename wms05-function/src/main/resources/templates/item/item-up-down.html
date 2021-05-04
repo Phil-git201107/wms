@@ -14,6 +14,7 @@
 <script type="text/javascript" src="layer/layer.js"></script>
 <script type="text/javascript" src="script/wms/item-up.js"></script>
 <script type="text/javascript" src="script/wms/item-down.js"></script>
+
 <script type="text/javascript">
 
 	$(function(){
@@ -120,9 +121,10 @@
 					var result = resp.result;
 					if("SUCCESS" == result){
 						layer.msg(itemNo+": 已成功上架!",{
-								icon: 3,
+								icon: 6,
 								time: 3000				
 						});
+						// 生成待上架商品tbody
 						generateItemPage();
 					}else{
 						layer.msg(resp.message,{
@@ -132,7 +134,10 @@
 					}
 				}	
 			});
+			// 因item up down功能都在這個頁面,故處理item up 時,須一併重新產生一次待下架商品tbody
 			generateItemDownPage();
+			// 重新產生側邊欄商品資料管理的badge內容
+			itemUpAndDownPositionSideNav();
 			$("#itemPageBody td[type='text']").text("");
 			$("#itemArea").find("option[value='" + 0 + "']").prop("selected",true);
 			$("#itemPosition").find("option").remove();
@@ -257,7 +262,10 @@
 			});
 			//關閉模態框
 			$("#confirmRemoveItemPositionModal").modal("hide");
+			// 因item up down功能都在這個頁面,故處理item down 時,須一併重新產生一次待上架商品tbody
 			generateItemPage();
+			// 重新產生側邊欄商品資料管理的badge內容
+			itemUpAndDownPositionSideNav();
 			$("#downItemPageBody td[type='text']").text("");
 		});
 		

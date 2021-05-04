@@ -113,8 +113,13 @@
 			});
 			generateUndoneItemPage();
 			getDoneItemAndFillDoneItemBody();
+			
+			undonePurchaseOrderSideNavBadeg();
 			return false;
 		});
+		
+		// 執行來自undone-shiporder的需求,顯示未完成揀貨出貨單內容
+		undonPurchaseOrderToBatchitemPurchasePage();
 
 		/*
 		// 顯示今日已完成的進貨資料

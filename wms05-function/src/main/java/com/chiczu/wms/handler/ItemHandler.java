@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
@@ -13,22 +12,27 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.chiczu.wms.ResultEntity;
-import com.chiczu.wms.WmsConstant;
 import com.chiczu.wms.WmsUtil;
 import com.chiczu.wms.api.MySQLRemoteService;
+import com.chiczu.wms.entity.po.CheckOrderCommodity;
 import com.chiczu.wms.entity.po.Commodity;
 import com.chiczu.wms.entity.po.PurchaseOrderCommodity;
+import com.chiczu.wms.entity.po.ShipOrderCommodity;
 import com.chiczu.wms.entity.po.SingleProductPurchase;
 import com.chiczu.wms.entity.po.SingleProductShip;
 import com.chiczu.wms.entity.vo.CommodityDataCreateVO;
+import com.chiczu.wms.entity.vo.ItemUpAndDownPositionSideNavVO;
+import com.chiczu.wms.entity.vo.PurchaseUndoneOrderVO;
+import com.chiczu.wms.entity.vo.ShipmentUndoneOrderVO;
+import com.chiczu.wms.entity.vo.StorageTableVO;
 import com.github.pagehelper.PageInfo;
 import com.google.gson.Gson;
 
@@ -39,6 +43,102 @@ public class ItemHandler {
 	
 	@Autowired
 	private MySQLRemoteService mysqlRemoteService;
+	
+	// 接收用戶上傳的進貨單csv檔,存入資料庫,並將此進貨單資料返回到進貨單出貨頁面 
+	@RequestMapping("/member/upload/purchase-order")
+	public String saveUploadPurchaseOrder(
+			@RequestPart("uploadPurchaseOrder") MultipartFile uploadPurchaseOrder,
+			Map<String,Object> map) {
+		List<PurchaseOrderCommodity> poCommodityList = mysqlRemoteService.saveUploadPurchaseOrder(uploadPurchaseOrder);
+		String originalName = uploadPurchaseOrder.getOriginalFilename();
+		logger.info("ItemHandler: "+originalName);
+		String name = originalName.substring(0,originalName.lastIndexOf("."));
+		
+		
+        map.put("orderId", name);
+        map.put("poCommpdityList", poCommodityList);
+		return "item/upload-purchase-order"; 
+	}
+	
+	// 依用戶輸入的盤點數量,生成隨機獲得的受盤點商品資料 
+	@ResponseBody
+	@RequestMapping("/generate/checkitem/amount/list")
+	public ResultEntity<List<CheckOrderCommodity>> generateCheckItemAmountList(@RequestParam("checkAmount") Integer checkAmount){
+		logger.info("generateCheckItemAmountList: "+checkAmount);
+		ResultEntity<List<CheckOrderCommodity>> result = mysqlRemoteService.generateCheckItemAmountList(checkAmount);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	// 依用戶調整後的儲位內容,更新資料庫資料
+	@ResponseBody
+	@RequestMapping("/save/item/adjust/position")
+	public ResultEntity<String> saveItemAdjustPosition(
+			@RequestParam("itemNo") String itemNo,
+			@RequestParam("area") String area,
+			@RequestParam("position") String position){
+		itemNo = itemNo.toUpperCase();
+		ResultEntity<String> resultEntity = mysqlRemoteService.saveItemAdjustPosition(itemNo,area,position);
+		if(ResultEntity.SUCCESS.equals(resultEntity.getResult())) {
+			return ResultEntity.successWithoutData();
+		}else {
+			return ResultEntity.failed(resultEntity.getMessage());
+		}
+	}
+	
+	// 為顯示儲位表,獲取儲位資料 
+	@ResponseBody
+	@RequestMapping("/get/storage/table/Info")
+	public ResultEntity<List<StorageTableVO>> getStorageTableInfo(){
+		ResultEntity<List<StorageTableVO>> result = mysqlRemoteService.getStorageTableInfo();
+		if("SUCCESS".equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	// 側邊欄通知用戶待上下架商品數
+	@ResponseBody
+	@RequestMapping("/get/item/upAnddown/position/sideNav")
+	public ResultEntity<ItemUpAndDownPositionSideNavVO> getItemUpAnddownPositionForSideNav(){
+		ResultEntity<ItemUpAndDownPositionSideNavVO> result = mysqlRemoteService.getItemUpAnddownPositionForSideNav();
+		if("SUCCESS".equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	// 側邊欄通知未完成的進貨單數,通知用戶     
+	@ResponseBody
+	@RequestMapping("/get/undone/purchase/order")
+	public ResultEntity<List<PurchaseUndoneOrderVO>> getUndonePurchaseOrder(){
+		
+		ResultEntity<List<PurchaseUndoneOrderVO>> result = mysqlRemoteService.getUndonePurchaseOrder();
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+		
+	}
+	
+	// 側邊欄通知未揀貨完的出貨訂單數,通知用戶 
+	@ResponseBody
+	@RequestMapping("/get/undone/ship/order")
+	public ResultEntity<List<ShipmentUndoneOrderVO>> getUndoneShipOrder(){
+		
+		ResultEntity<List<ShipmentUndoneOrderVO>> result = mysqlRemoteService.getUndoneShipOrder();
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
 	
 	// 獲取進貨單內已完成進貨的商品資料
 	@ResponseBody
@@ -52,7 +152,33 @@ public class ItemHandler {
 		}
 	}
 	
-	// 為進貨單內的商品,完成進貨動作
+	// 為調整儲位頁,依itemno獲取商品資料 
+	@ResponseBody
+	@RequestMapping("/get/item/to/adjust/position/page")
+	public ResultEntity<Commodity> getItemToAdjustPositionPage(@RequestParam("itemNo") String itemno){
+		itemno = itemno.toUpperCase().trim();
+		ResultEntity<Commodity> result = mysqlRemoteService.getItemToAdjustPositionPage(itemno);
+		if("SUCCESS".equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+		
+	}
+	
+	// 獲取出貨單內已完成出貨的品項 
+	@ResponseBody
+	@RequestMapping("/get/ship/order/item/done")
+	public ResultEntity<List<ShipOrderCommodity>> getShipOrderItemDone(@RequestParam("shipOrederNo") String shipOrederNo){
+		ResultEntity<List<ShipOrderCommodity>> result = mysqlRemoteService.getShipOrderItemDone(shipOrederNo);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	// 為進貨單內的商品,完成進貨存檔動作
 	@ResponseBody
 	@RequestMapping("/save/purchase/order/item")
 	public ResultEntity<List<PurchaseOrderCommodity>> savePurchaseOrderItem(
@@ -60,6 +186,25 @@ public class ItemHandler {
 			@RequestParam("itemno") String itemno,
 			@RequestParam("purchaseQuantity") Integer purchaseQuantity){
 		ResultEntity<List<PurchaseOrderCommodity>> result = mysqlRemoteService.savePurchaseOrderItem(purchaseOrederNo,itemno,purchaseQuantity);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	// 為出貨單內商品,完成出貨扣除庫存量...等商品資料更新 
+	@ResponseBody
+	@RequestMapping("/save/ship/order/item")
+	public ResultEntity<List<ShipOrderCommodity>> saveShipOrderItem(
+			@RequestParam("shipOrederNo") String shipOrederNo,
+			@RequestParam("itemno") String itemno,
+			@RequestParam("itemCurrentStock") Integer itemCurrentStock,
+			@RequestParam("shipQuantity") Integer shipQuantity){
+		if( shipQuantity > itemCurrentStock) {
+			return ResultEntity.failed("出貨量大於庫存量,請確認庫存數或調整出貨量。");
+		}
+		ResultEntity<List<ShipOrderCommodity>> result = mysqlRemoteService.saveShipOrderItem(shipOrederNo,itemno,shipQuantity);
 		if(ResultEntity.SUCCESS.equals(result.getResult())) {
 			return ResultEntity.successWithData(result.getData());
 		}else {
@@ -80,7 +225,20 @@ public class ItemHandler {
 		}
 	}
 	
-	// 單品進貨
+	// 依出貨單號,返回待揀貨商品資料 
+	@ResponseBody
+	@RequestMapping("/get/item/from/ship/order")
+	public ResultEntity<List<Commodity>> getItemFromShipOrder(@RequestParam("shipOrederNo") String shipOrederNo){
+		shipOrederNo = shipOrederNo.trim().toUpperCase();
+		ResultEntity<List<Commodity>> result = mysqlRemoteService.getItemFromShipOrder(shipOrederNo);
+		if(ResultEntity.SUCCESS.equals(result.getResult())) {
+			return ResultEntity.successWithData(result.getData());
+		}else {
+			return ResultEntity.failed(result.getMessage());
+		}
+	}
+	
+	// 單品進貨,更新庫存資料
 	@ResponseBody
 	@RequestMapping("/save/single/item/purchase")
 	public ResultEntity<SingleProductPurchase> saveSingleItemPurchase(
@@ -95,7 +253,7 @@ public class ItemHandler {
 		}
 	}
 	
-	// 單品出貨
+	// 單品揀貨,更新庫存資料
 	@ResponseBody
 	@RequestMapping("/save/single/item/shipment")
 	public ResultEntity<SingleProductShip> saveSingleItemShip(
@@ -127,7 +285,7 @@ public class ItemHandler {
 		}
 	}
 	
-	// 單品出貨 
+	// 獲取今天完成揀貨的品項
 	@ResponseBody
 	@RequestMapping("/get/today/shipment/item/info")
 	public ResultEntity<List<SingleProductShip>> getTodayShipmentItemInfo(){
@@ -152,7 +310,7 @@ public class ItemHandler {
 		}
 	}
 	
-	// 上架,建立商品儲位置
+	// 上架,為商品設定儲位
 	@ResponseBody
 	@RequestMapping("/save/item/position")	
 	public ResultEntity<String> saveItemPosition(
@@ -161,7 +319,6 @@ public class ItemHandler {
 			@RequestParam("position") String position
 			) {
 		itemNo = itemNo.toUpperCase();
-		logger.info("itemhandler1:"+itemNo);
 		ResultEntity<String> resultEntity = mysqlRemoteService.saveItemPosition(itemNo,area,position);
 		if(ResultEntity.SUCCESS.equals(resultEntity.getResult())) {
 			return ResultEntity.successWithoutData();
@@ -296,8 +453,7 @@ public class ItemHandler {
 		String jsonStr = gson.toJson(map);
 		return jsonStr;
 	}
-	
-	
+		
 	// 獲取新商品建檔資料,並存入資料庫
 	@RequestMapping("/create/newitem/data")
 	public String saveCommodityBasicInfo(

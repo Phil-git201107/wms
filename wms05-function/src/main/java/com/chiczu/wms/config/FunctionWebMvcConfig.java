@@ -23,8 +23,15 @@ public class FunctionWebMvcConfig implements WebMvcConfigurer{
 		registry.addViewController("/member/to/role/assign").setViewName("role-assign");
 		registry.addViewController("/member/to/item/in-stock").setViewName("item/item-purchase");
 		registry.addViewController("/member/to/batchitem/in-stock").setViewName("item/batchitem-purchase");
+		registry.addViewController("/member/to/upload/batchitem/in-stock").setViewName("item/upload-purchase-order");
+		registry.addViewController("/member/to/undone/purchaseorder").setViewName("item/undone-purchaseorder");
 		registry.addViewController("/member/to/item/shipment").setViewName("item/item-shipment");
 		registry.addViewController("/member/to/batchitem/shipment").setViewName("item/batchitem-shipment");
+		registry.addViewController("/member/to/shiporder/create").setViewName("item/shiporder-create");
+		registry.addViewController("/member/to/undone/shiporder").setViewName("item/undone-shiporder");
+		registry.addViewController("/member/to/storage/table").setViewName("storageTable");
+		registry.addViewController("/member/to/adjust/position").setViewName("adjust-position");
+		registry.addViewController("/member/to/checkAmount/page").setViewName("checkAmount");
 		registry.addViewController("/to/test").setViewName("test");
 		
 

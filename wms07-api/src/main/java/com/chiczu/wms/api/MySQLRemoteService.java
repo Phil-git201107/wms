@@ -6,13 +6,22 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.chiczu.wms.ResultEntity;
+import com.chiczu.wms.entity.po.CheckOrderCommodity;
 import com.chiczu.wms.entity.po.Commodity;
 import com.chiczu.wms.entity.po.PurchaseOrderCommodity;
+import com.chiczu.wms.entity.po.ShipOrder;
+import com.chiczu.wms.entity.po.ShipOrderCommodity;
 import com.chiczu.wms.entity.po.SingleProductPurchase;
 import com.chiczu.wms.entity.po.SingleProductShip;
 import com.chiczu.wms.entity.po.Users;
+import com.chiczu.wms.entity.vo.ItemUpAndDownPositionSideNavVO;
+import com.chiczu.wms.entity.vo.PurchaseUndoneOrderVO;
+import com.chiczu.wms.entity.vo.ShipmentUndoneOrderVO;
+import com.chiczu.wms.entity.vo.StorageTableVO;
 import com.github.pagehelper.PageInfo;
 
 @FeignClient("wms-mysql")
@@ -115,5 +124,44 @@ public interface MySQLRemoteService {
 			@RequestParam("itemno") String itemno,
 			@RequestParam("itemCurrentStock")Integer itemCurrentStock,
 			@RequestParam("shipAmount") Integer shipAmount);
+
+	@RequestMapping("/get/item/from/ship/order")
+	public ResultEntity<List<Commodity>> getItemFromShipOrder(@RequestParam("shipOrederNo") String shipOrederNo);
+
+	@RequestMapping("/get/ship/order/item/done")
+	public ResultEntity<List<ShipOrderCommodity>> getShipOrderItemDone(@RequestParam("shipOrederNo") String shipOrederNo);
+
+	@RequestMapping("/save/ship/order/item")
+	public ResultEntity<List<ShipOrderCommodity>> saveShipOrderItem(
+			@RequestParam("shipOrederNo") String shipOrederNo,
+			@RequestParam("itemno") String itemno,
+			@RequestParam("shipQuantity") Integer shipQuantity);
+
+	@RequestMapping("/get/undone/ship/order")
+	public ResultEntity<List<ShipmentUndoneOrderVO>> getUndoneShipOrder();
+
+	@RequestMapping("/get/item/upAnddown/position/sideNav")
+	public ResultEntity<ItemUpAndDownPositionSideNavVO> getItemUpAnddownPositionForSideNav();
+
+	@RequestMapping("/get/storage/table/Info")
+	public ResultEntity<List<StorageTableVO>> getStorageTableInfo();
+	
+	@RequestMapping("/get/item/to/adjust/position/page")
+	public ResultEntity<Commodity> getItemToAdjustPositionPage(@RequestParam("itemno") String itemno);
+
+	@RequestMapping("/save/item/adjust/position")
+	public ResultEntity<String> saveItemAdjustPosition(
+			@RequestParam("itemNo") String itemNo,
+			@RequestParam("area") String area,
+			@RequestParam("position") String position);
+
+	@RequestMapping("/generate/checkitem/amount/list")
+	public ResultEntity<List<CheckOrderCommodity>> generateCheckItemAmountList(@RequestParam("checkAmount") Integer checkAmount);
+
+	@RequestMapping(path = "/member/upload/purchase-order",consumes = "multipart/form-data")
+	public List<PurchaseOrderCommodity> saveUploadPurchaseOrder(@RequestPart("uploadPurchaseOrder") MultipartFile uploadPurchaseOrder);
+
+	@RequestMapping("/get/undone/purchase/order")
+	public ResultEntity<List<PurchaseUndoneOrderVO>> getUndonePurchaseOrder();
 	
 }

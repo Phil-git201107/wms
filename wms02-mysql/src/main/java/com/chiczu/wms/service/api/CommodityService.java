@@ -39,5 +39,11 @@ public interface CommodityService {
 
 	ResultEntity<SingleProductShip> saveSingleItemShip(String itemno, Integer itemCurrentStock, Integer shipAmount);
 
+	ResultEntity<List<Commodity>> getItemFromShipOrder(String shipOrederNo);
+
+	ResultEntity<Commodity> getItemToAdjustPositionPage(String itemno);
+
+	ResultEntity<List<Commodity>> generateCheckItemAmountList(Integer checkAmount);
+
 
 }
